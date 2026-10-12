@@ -1,0 +1,57 @@
+export type Track = { number: number; name: string; duration_ms: number };
+
+export type Album = {
+  id: string;
+  spotify_id: string | null;
+  artist: string;
+  title: string;
+  release_year: number | null;
+  cover_url: string | null;
+  spotify_url: string | null;
+  tracks: Track[];
+  top_song: string | null;
+};
+
+export type Rating = {
+  user_id: string;
+  day: string;
+  back_to_back: number;
+  vibes: number;
+  nostalgia: number | null;
+  relisten: number;
+  new_to_me: boolean;
+  overall: number;
+  note: string | null;
+  late: boolean;
+  created_day: string;
+  updated_at: string;
+};
+
+export type DayAverages = {
+  day: string;
+  ratings: number;
+  back_to_back: number | null;
+  vibes: number | null;
+  nostalgia: number | null;
+  nostalgia_ratings: number;
+  relisten: number | null;
+  overall: number | null;
+};
+
+export const MEASURES = [
+  { key: "back_to_back", name: "Back-to-back / lyrical quality", short: "Back-to-back", question: "Does it hold up start to finish, and are the words any good?" },
+  { key: "vibes", name: "Vibes", short: "Vibes", question: "How does it make you feel?" },
+  { key: "nostalgia", name: "Nostalgia", short: "Nostalgia", question: "Does it take you back to a time, a place or a memory?" },
+  { key: "relisten", name: "Relistenability", short: "Relisten", question: "Would you choose to put it on again?" },
+] as const;
+
+export type MeasureKey = (typeof MEASURES)[number]["key"];
+
+export function oneDecimal(n: number | null | undefined): string {
+  return n == null || Number.isNaN(Number(n)) ? "–" : Number(n).toFixed(1);
+}
+
+export function spotifyLink(album: Pick<Album, "spotify_url" | "artist" | "title">): string {
+  if (album.spotify_url && album.spotify_url.startsWith("https://open.spotify.com/")) return album.spotify_url;
+  return "https://open.spotify.com/search/" + encodeURIComponent(`${album.artist} ${album.title}`);
+}
