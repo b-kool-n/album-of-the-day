@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: "Album of the Day",
   description: "One album a day. Listen start to finish, score it, compare with everyone else.",
   icons: { icon: "/icon.svg" },
+  // iPhone: open full screen from the home screen, with a black status bar.
+  appleWebApp: { capable: true, title: "Album of the Day", statusBarStyle: "black" },
 };
 
 export const viewport: Viewport = {
