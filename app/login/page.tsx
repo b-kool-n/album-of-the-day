@@ -5,15 +5,18 @@ import { AuthForm } from "./AuthForm";
 
 export const metadata = { title: "Sign in · Album of the Day" };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string }> }) {
   const { profile } = await getViewer();
   if (profile) redirect("/");
-  const { mode } = await searchParams;
+  const { mode, error } = await searchParams;
   const signUp = mode === "signup";
   return (
     <div className="auth">
       <h1>{signUp ? "Join in" : "Sign in"}</h1>
       <p className="msg">{signUp ? "Make an account to score albums and keep your history." : "Welcome back."}</p>
+      {error === "link" && (
+        <p className="msg err" role="alert">That link has expired or was already used. Sign in with your email and password.</p>
+      )}
       <AuthForm mode={signUp ? "signup" : "signin"} />
       <p className="switch-mode">
         {signUp ? (

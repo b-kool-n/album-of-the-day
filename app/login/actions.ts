@@ -2,9 +2,18 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string; info?: string };
+
+// The address this request came in on, so email links point back at the live site, not localhost.
+async function siteOrigin() {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
 
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
@@ -25,7 +34,11 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   if (!email) return { error: "Enter your email." };
   if (password.length < 8) return { error: "Use a password of at least 8 characters." };
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: name }, emailRedirectTo: `${await siteOrigin()}/auth/callback` },
+  });
   if (error) {
     if (/registered|exists/i.test(error.message)) return { error: "There's already an account with that email. Sign in instead." };
     return { error: error.message };
