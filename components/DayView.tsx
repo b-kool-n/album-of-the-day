@@ -5,14 +5,15 @@ import { MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type R
 import { Sleeve } from "./Sleeve";
 import { Disc } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
+import { Comments } from "./Comments";
 
 export async function DayView({ day }: { day: string }) {
   const { supabase, userId, profile } = await getViewer();
   const today = ukToday();
   const isToday = day === today;
 
-  const { data: dayRow } = await supabase.from("album_days").select("day, albums(*)").eq("day", day).maybeSingle();
-  const album = (dayRow?.albums ?? null) as unknown as Album | null;
+  const { data: dayRow } = await supabase.from("album_days").select("day, albums(*, profiles!albums_suggested_by_fkey(display_name))").eq("day", day).maybeSingle();
+  const album = (dayRow?.albums ?? null) as unknown as (Album & { profiles: { display_name: string } | null }) | null;
 
   if (!album || day > today) {
     return (
@@ -51,6 +52,7 @@ export async function DayView({ day }: { day: string }) {
           {album.release_year && <span>Released <b className="num">{album.release_year}</b></span>}
           {album.top_song && <span>Most played <b>{album.top_song}</b></span>}
           {album.tracks?.length > 0 && <span><b className="num">{album.tracks.length}</b> tracks · <b className="num">{Math.round(album.tracks.reduce((a, t) => a + t.duration_ms, 0) / 60000)}</b> min</span>}
+          {album.profiles?.display_name && <span>Suggested by <b>{album.profiles.display_name}</b></span>}
         </div>
         <a className="listen" href={spotifyLink(album)} target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -100,6 +102,8 @@ export async function DayView({ day }: { day: string }) {
           </p>
         </div>
       )}
+
+      <Comments day={day} hasScored={!!mine} />
     </>
   );
 }

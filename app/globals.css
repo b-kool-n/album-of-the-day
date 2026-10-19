@@ -181,6 +181,30 @@ details.edit form { margin-top: 8px; display: grid; gap: 8px; }
 .admin-item .item { border-bottom: 0; padding: 0; }
 .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
+/* Tab count */
+.tab-count { display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--orange); color: var(--on-orange); font-family: var(--mono); font-size: 11px; line-height: 18px; text-align: center; vertical-align: 1px; }
+
+/* Review and back catalogue rows */
+.review { margin-top: 10px; padding-left: 70px; }
+.review-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.review-row .input { width: auto; flex: 1 1 150px; padding-block: 6px; }
+.section-title .chip { vertical-align: middle; font-stretch: 100%; }
+
+/* Comments */
+.comments { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
+.comment { padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.comment .by { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.comment .who-name { color: var(--ink); font-weight: 650; }
+.comment time { font-family: var(--mono); font-size: 12px; }
+.comment p { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.comment details.edit { margin-top: 6px; }
+details.spoiler { margin-top: 12px; }
+details.spoiler > summary { cursor: pointer; display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; font-weight: 650; }
+details.spoiler > p { margin: 10px 0 0; }
+.comment-form { margin-top: 18px; border-top: 1px solid var(--line); }
+.comment-form .submit-row { margin-top: 8px; }
+.comment-form .count { margin: 0; }
+
 /* Auth */
 .auth { max-width: 380px; margin: 36px auto 0; }
 .auth h1 { font-size: 34px; font-weight: 850; font-stretch: 75%; text-transform: uppercase; }
@@ -192,6 +216,7 @@ details.edit form { margin-top: 8px; display: grid; gap: 8px; }
 .empty h2 { color: var(--ink); font-size: 24px; font-weight: 800; font-stretch: 80%; text-transform: uppercase; }
 
 @media (max-width: 420px) {
+  .review { padding-left: 0; }
   .form-grid { grid-template-columns: 1fr; }
   .locked-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

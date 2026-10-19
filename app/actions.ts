@@ -5,6 +5,39 @@ import { getViewer } from "@/lib/supabase/server";
 import { isIsoDate, ukToday } from "@/lib/dates";
 
 export type ScoreState = { error?: string; saved?: boolean };
+export type CommentState = { error?: string; at?: number };
+
+function refreshDay(day: string) {
+  revalidatePath(day === ukToday() ? "/" : `/day/${day}`);
+}
+
+export async function postComment(_prev: CommentState, formData: FormData): Promise<CommentState> {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return { error: "Sign in to comment." };
+  const day = String(formData.get("day") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  if (!isIsoDate(day) || day > ukToday()) return { error: "That day isn't open for comments." };
+  if (!body) return { error: "Write something first." };
+  if (body.length > 1000) return { error: "Keep it under 1,000 characters." };
+
+  const { error } = await supabase.from("comments").insert({ day, user_id: userId, body });
+  if (error) {
+    if (error.message.includes("slow_down")) return { error: "You're posting quickly. Wait a few seconds and try again." };
+    return { error: "Couldn't post your comment. Try again." };
+  }
+  refreshDay(day);
+  return { at: Date.now() };
+}
+
+export async function deleteComment(formData: FormData) {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  const id = String(formData.get("id") ?? "");
+  const day = String(formData.get("day") ?? "");
+  // The database only lets you delete your own comments (the curator can delete any).
+  await supabase.from("comments").delete().eq("id", id);
+  if (isIsoDate(day)) refreshDay(day);
+}
 
 function score(formData: FormData, key: string): number | null {
   const raw = formData.get(key);

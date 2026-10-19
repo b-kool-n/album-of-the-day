@@ -23,6 +23,14 @@ export function formatDay(iso: string, long = false): string {
   );
 }
 
+// "18:42" for today, otherwise "Sun 18 Oct, 18:42", in UK time.
+export function formatWhen(timestamp: string): string {
+  const d = new Date(timestamp);
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+  const day = ukToday(d);
+  return day === ukToday() ? time : `${formatDay(day)}, ${time}`;
+}
+
 export function addDays(iso: string, n: number): string {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d + n, 12)).toISOString().slice(0, 10);

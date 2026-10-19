@@ -21,7 +21,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await getViewer();
+  const { supabase, profile } = await getViewer();
+  const { count: pendingSuggestions } = profile?.is_admin
+    ? await supabase.from("submissions").select("id", { count: "exact", head: true }).eq("status", "pending")
+    : { count: 0 };
   return (
     <html lang="en-GB">
       <head>
@@ -51,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 )}
               </div>
             </div>
-            <Nav isAdmin={!!profile?.is_admin} />
+            <Nav isAdmin={!!profile?.is_admin} pendingSuggestions={pendingSuggestions ?? 0} />
           </div>
         </header>
         <main className="wrap">{children}</main>
