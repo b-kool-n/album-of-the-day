@@ -5,10 +5,19 @@ import { AuthForm } from "./AuthForm";
 
 export const metadata = { title: "Sign in · Album of the Day" };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string; deleted?: string }> }) {
   const { profile } = await getViewer();
   if (profile) redirect("/");
-  const { mode, error } = await searchParams;
+  const { mode, error, deleted } = await searchParams;
+  if (deleted) {
+    return (
+      <div className="auth">
+        <h1>Account deleted</h1>
+        <p className="msg">Your account and everything in it has been removed. Thanks for listening.</p>
+        <p className="switch-mode"><Link href="/">Back to today&apos;s album</Link></p>
+      </div>
+    );
+  }
   const signUp = mode === "signup";
   return (
     <div className="auth">

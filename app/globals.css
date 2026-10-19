@@ -205,6 +205,40 @@ details.spoiler > p { margin: 10px 0 0; }
 .comment-form .submit-row { margin-top: 8px; }
 .comment-form .count { margin: 0; }
 
+/* Header account link */
+.account-link { font-size: 14px; font-weight: 650; color: var(--ink); text-decoration: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; }
+.account-link:hover { border-color: var(--orange); }
+
+/* Account, privacy */
+.page-title { margin-top: 24px; font-size: 34px; font-weight: 850; font-stretch: 75%; text-transform: uppercase; line-height: 1; }
+.facts-list { margin: 14px 0 0; display: grid; gap: 10px; }
+.facts-list div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; }
+.facts-list dt { color: var(--muted); font-size: 14px; }
+.facts-list dd { margin: 0; overflow-wrap: anywhere; }
+.inline-form { margin-top: 6px; }
+.steps { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+details.danger { margin-top: 18px; }
+details.danger > summary { color: var(--warn); }
+.btn.danger-btn { background: var(--warn); color: var(--on-orange); }
+.prose { max-width: 62ch; }
+.prose h2 { margin-top: 26px; font-size: 20px; font-weight: 800; font-stretch: 80%; text-transform: uppercase; }
+.prose p, .prose li { line-height: 1.6; }
+.prose ul { padding-left: 20px; display: grid; gap: 6px; }
+
+/* Comment actions and moderation */
+.comment-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
+.comment-actions details.edit form { margin-top: 8px; }
+.comment.is-hidden { border-style: dashed; opacity: .8; }
+.msg.small { font-size: 12px; }
+.subnav { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.subnav a { padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; font-weight: 650; font-size: 14px; color: var(--muted); }
+.subnav a[aria-current="page"] { color: var(--ink); border-color: var(--orange); }
+.quote { margin: 8px 0; padding: 10px 12px; background: var(--surface); border-left: 3px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.reasons { margin: 0 0 10px; padding-left: 18px; font-size: 14px; display: grid; gap: 2px; }
+.admin-item.is-done { opacity: .55; }
+.word-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.word-list li { display: flex; gap: 8px; align-items: center; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font-family: var(--mono); font-size: 13px; }
+
 /* Auth */
 .auth { max-width: 380px; margin: 36px auto 0; }
 .auth h1 { font-size: 34px; font-weight: 850; font-stretch: 75%; text-transform: uppercase; }

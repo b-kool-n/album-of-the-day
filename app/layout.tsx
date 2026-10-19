@@ -4,7 +4,6 @@ import "./globals.css";
 import { Logo } from "@/components/Logo";
 import { Nav } from "@/components/Nav";
 import { getViewer } from "@/lib/supabase/server";
-import { signOut } from "./login/actions";
 
 export const metadata: Metadata = {
   title: "Album of the Day",
@@ -22,9 +21,16 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { supabase, profile } = await getViewer();
-  const { count: pendingSuggestions } = profile?.is_admin
-    ? await supabase.from("submissions").select("id", { count: "exact", head: true }).eq("status", "pending")
-    : { count: 0 };
+  // For the curator: suggestions, reported comments and new feedback waiting.
+  let waiting = 0;
+  if (profile?.is_admin) {
+    const counts = await Promise.all([
+      supabase.from("submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("comments").select("id", { count: "exact", head: true }).gt("report_count", 0),
+      supabase.from("feedback").select("id", { count: "exact", head: true }).eq("handled", false),
+    ]);
+    waiting = counts.reduce((n, c) => n + (c.count ?? 0), 0);
+  }
   return (
     <html lang="en-GB">
       <head>
@@ -46,15 +52,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <div className="who">
                 {profile ? (
-                  <form action={signOut}>
-                    <button className="linkbtn" type="submit">Sign out</button>
-                  </form>
+                  <Link href="/account" className="account-link">Account</Link>
                 ) : (
-                  <Link href="/login" className="linkbtn">Sign in</Link>
+                  <Link href="/login" className="account-link">Sign in</Link>
                 )}
               </div>
             </div>
-            <Nav isAdmin={!!profile?.is_admin} pendingSuggestions={pendingSuggestions ?? 0} />
+            <Nav isAdmin={!!profile?.is_admin} adminCount={waiting} />
           </div>
         </header>
         <main className="wrap">{children}</main>

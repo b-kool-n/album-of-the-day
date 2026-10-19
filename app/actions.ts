@@ -23,10 +23,24 @@ export async function postComment(_prev: CommentState, formData: FormData): Prom
   const { error } = await supabase.from("comments").insert({ day, user_id: userId, body });
   if (error) {
     if (error.message.includes("slow_down")) return { error: "You're posting quickly. Wait a few seconds and try again." };
+    if (error.message.includes("banned_words")) return { error: "That comment includes a word that isn't allowed here. Please reword it." };
+    if (error.code === "42501") return { error: "Your account can't post comments at the moment." };
     return { error: "Couldn't post your comment. Try again." };
   }
   refreshDay(day);
   return { at: Date.now() };
+}
+
+export async function reportComment(formData: FormData) {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  const id = String(formData.get("id") ?? "");
+  const day = String(formData.get("day") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 200) || null;
+  // Reporting twice, or reporting your own comment, is refused by the database and ignored here.
+  await supabase.from("comment_reports").insert({ comment_id: id, reporter_id: userId, reason });
+  revalidatePath("/", "layout");
+  if (isIsoDate(day)) refreshDay(day);
 }
 
 export async function deleteComment(formData: FormData) {
@@ -73,6 +87,8 @@ export async function saveScores(_prev: ScoreState, formData: FormData): Promise
     : await supabase.from("ratings").insert({ ...row, user_id: userId, day }).select("day").single();
 
   if (error) {
+    if (error.message.includes("banned_words")) return { error: "Your note includes a word that isn't allowed here. Please reword it." };
+    if (error.message.includes("blocked")) return { error: "Your account can't add notes at the moment. Clear the note and save again." };
     return {
       error: existing
         ? "Scores lock at midnight UK time on the day you give them, so these can't be changed now."

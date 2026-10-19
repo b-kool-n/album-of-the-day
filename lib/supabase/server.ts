@@ -28,13 +28,14 @@ export async function getViewer() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = (data?.claims?.sub as string | undefined) ?? null;
-  if (!userId) return { supabase, userId: null, profile: null };
+  const email = (data?.claims?.email as string | undefined) ?? null;
+  if (!userId) return { supabase, userId: null, email: null, profile: null };
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, is_admin")
+    .select("id, display_name, is_admin, is_blocked, created_at")
     .eq("id", userId)
     .maybeSingle();
-  return { supabase, userId, profile: profile as Profile | null };
+  return { supabase, userId, email, profile: profile as Profile | null };
 }
 
-export type Profile = { id: string; display_name: string; is_admin: boolean };
+export type Profile = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string };

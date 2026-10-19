@@ -4,6 +4,7 @@ import { addDays, formatDay, ukToday } from "@/lib/dates";
 import type { Album } from "@/lib/types";
 import { Sleeve } from "@/components/Sleeve";
 import { CatalogueActions, EditDay, ReviewSubmission, ScheduleForm } from "./forms";
+import { AdminNav } from "./AdminNav";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin · Album of the Day" };
@@ -15,7 +16,7 @@ export default async function AdminPage() {
   if (!profile?.is_admin) redirect("/");
 
   const today = ukToday();
-  const [{ data: dayData }, { data: subData }, { data: albumData }] = await Promise.all([
+  const [{ data: dayData }, { data: subData }, { data: albumData }, { count: reportedCount }, { count: feedbackCount }] = await Promise.all([
     supabase.from("album_days").select("day, albums(id, artist, title, cover_url, top_song, spotify_id, release_year)").order("day", { ascending: false }),
     supabase
       .from("submissions")
@@ -26,6 +27,8 @@ export default async function AdminPage() {
       .from("albums")
       .select("id, artist, title, cover_url, top_song, spotify_id, release_year, created_at, profiles!albums_suggested_by_fkey(display_name), album_days!album_days_album_id_fkey(day)")
       .order("created_at", { ascending: false }),
+    supabase.from("comments").select("id", { count: "exact", head: true }).gt("report_count", 0),
+    supabase.from("feedback").select("id", { count: "exact", head: true }).eq("handled", false),
   ]);
 
   const rows = (dayData ?? []) as unknown as { day: string; albums: AlbumRow }[];
@@ -43,6 +46,7 @@ export default async function AdminPage() {
 
   return (
     <>
+      <AdminNav current="albums" albumsCount={pending.length} moderationCount={(reportedCount ?? 0) + (feedbackCount ?? 0)} />
       {!scheduled.has(today) ? (
         <div className="banner"><b>Today has no album.</b> Everyone is seeing an empty page. Schedule one below.</div>
       ) : !scheduled.has(addDays(today, 1)) ? (

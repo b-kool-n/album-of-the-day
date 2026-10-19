@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function Nav({ isAdmin, pendingSuggestions = 0 }: { isAdmin: boolean; pendingSuggestions?: number }) {
+export function Nav({ isAdmin, adminCount = 0 }: { isAdmin: boolean; adminCount?: number }) {
   const path = usePathname();
   const tabs = [
     { href: "/", label: "Today", active: path === "/" },
@@ -17,8 +17,8 @@ export function Nav({ isAdmin, pendingSuggestions = 0 }: { isAdmin: boolean; pen
       {tabs.map((t) => (
         <Link key={t.href} href={t.href} className="tab" aria-current={t.active ? "page" : undefined}>
           {t.label}
-          {t.href === "/admin" && pendingSuggestions > 0 && (
-            <span className="tab-count" aria-label={`${pendingSuggestions} suggestions waiting`}>{pendingSuggestions}</span>
+          {t.href === "/admin" && adminCount > 0 && (
+            <span className="tab-count" aria-label={`${adminCount} waiting`}>{adminCount}</span>
           )}
         </Link>
       ))}

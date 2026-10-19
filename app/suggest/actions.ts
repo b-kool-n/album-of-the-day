@@ -44,6 +44,8 @@ export async function suggestAlbum(_prev: SuggestState, formData: FormData): Pro
   if (error) {
     if (error.message.includes("too_many_pending")) return { error: "You have 5 suggestions waiting for review. You can add more once some have been looked at." };
     if (error.code === "23505") return { error: ALREADY.pending };
+    if (error.message.includes("banned_words")) return { error: "Your reason includes a word that isn't allowed here. Please reword it." };
+    if (error.code === "42501") return { error: "Your account can't suggest albums at the moment." };
     return { error: "Couldn't save your suggestion. Try again." };
   }
 
