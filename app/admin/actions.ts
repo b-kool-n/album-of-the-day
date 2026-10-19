@@ -87,6 +87,12 @@ export async function updateDay(_prev: AdminState, formData: FormData): Promise<
       if (album.id !== row.album_id) {
         const { error } = await supabase.from("album_days").update({ album_id: album.id }).eq("day", day);
         if (error) return { error: "Couldn't change the album for that day." };
+        // A placeholder added without a Spotify link is replaced, not kept in the back catalogue.
+        const { data: old } = await supabase.from("albums").select("spotify_id").eq("id", row.album_id).maybeSingle();
+        if (old && !old.spotify_id) {
+          const { count } = await supabase.from("album_days").select("day", { count: "exact", head: true }).eq("album_id", row.album_id);
+          if (!count) await supabase.from("albums").delete().eq("id", row.album_id);
+        }
       }
     } else if (topSong) {
       const { error } = await supabase.from("albums").update({ top_song: topSong, updated_at: new Date().toISOString() }).eq("id", row.album_id);
