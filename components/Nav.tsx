@@ -15,7 +15,7 @@ export function Nav({ isAdmin, adminCount = 0 }: { isAdmin: boolean; adminCount?
   return (
     <nav className="tabs" aria-label="Sections">
       {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className="tab" aria-current={t.active ? "page" : undefined}>
+        <Link key={t.href} href={t.href} className="tab" data-tour={t.href === "/" ? "today" : t.href.slice(1)} aria-current={t.active ? "page" : undefined}>
           {t.label}
           {t.href === "/admin" && adminCount > 0 && (
             <span className="tab-count" aria-label={`${adminCount} waiting`}>{adminCount}</span>

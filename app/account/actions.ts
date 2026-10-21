@@ -47,6 +47,23 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
   redirect("/login?deleted=1");
 }
 
+// ===== Tour =====
+
+export async function markTourSeen() {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  await supabase.from("profiles").update({ tour_seen: true }).eq("id", userId);
+  revalidatePath("/", "layout");
+}
+
+export async function replayTour() {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  await supabase.from("profiles").update({ tour_seen: false }).eq("id", userId);
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+
 // ===== Daily notification =====
 
 type BrowserSubscription = { endpoint?: string; keys?: { p256dh?: string; auth?: string } };

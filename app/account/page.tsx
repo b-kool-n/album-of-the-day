@@ -4,6 +4,7 @@ import { formatDay } from "@/lib/dates";
 import { Disc } from "@/components/Logo";
 import { signOut } from "../login/actions";
 import { DeleteAccountForm, FeedbackForm, NameForm } from "./forms";
+import { replayTour } from "./actions";
 import { PushSettings } from "./PushSettings";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,10 @@ export default async function AccountPage() {
       <section className="panel">
         <h2>Privacy and support</h2>
         <p className="msg">What we store, why, and how to get help.</p>
-        <Link className="btn ghost small" href="/privacy">Read the privacy policy</Link>
+        <div className="inline">
+          <Link className="btn ghost small" href="/privacy">Read the privacy policy</Link>
+          <form action={replayTour}><button className="btn ghost small" type="submit">Replay the tour</button></form>
+        </div>
       </section>
 
       <section className="panel">

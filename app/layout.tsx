@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { Logo } from "@/components/Logo";
 import { Nav } from "@/components/Nav";
+import { Tour } from "@/components/Tour";
 import { getViewer } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -52,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <div className="who">
                 {profile ? (
-                  <Link href="/account" className="account-link">Account</Link>
+                  <Link href="/account" className="account-link" data-tour="account">Account</Link>
                 ) : (
                   <Link href="/login" className="account-link">Sign in</Link>
                 )}
@@ -62,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="wrap">{children}</main>
+        {profile && !profile.tour_seen && <Tour />}
       </body>
     </html>
   );
