@@ -2,6 +2,7 @@
   "expo": {
     "name": "Album of the Day",
     "slug": "album-of-the-day",
+    "owner": "b-kool-n",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -51,6 +52,11 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b5031fca-c2c8-4a9d-bb64-432e3dd45f5f"
+      }
     }
   }
 }
