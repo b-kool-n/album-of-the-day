@@ -2,7 +2,7 @@ import "expo-sqlite/localStorage/install";
 import { createClient } from "@supabase/supabase-js";
 import { AppState, Platform } from "react-native";
 
-export const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? "https://album-of-the-day-theta.vercel.app";
+export const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? "https://aotd.world";
 
 // Same database as the website. The publishable key is meant to be in the app:
 // the database's access rules decide what each signed-in person can read and change.

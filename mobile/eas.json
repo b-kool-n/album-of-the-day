@@ -12,7 +12,7 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ozcjuhcxtijxvroqvwcr.supabase.co",
         "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_7SVgoLImKBPdZ04RfiTKaA_R5bmpvTp",
-        "EXPO_PUBLIC_WEB_URL": "https://album-of-the-day-theta.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://aotd.world"
       }
     },
     "production": {
@@ -20,7 +20,7 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ozcjuhcxtijxvroqvwcr.supabase.co",
         "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_7SVgoLImKBPdZ04RfiTKaA_R5bmpvTp",
-        "EXPO_PUBLIC_WEB_URL": "https://album-of-the-day-theta.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://aotd.world"
       }
     }
   },
