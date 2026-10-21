@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { sendPush } from "@/lib/push";
+import { sendAppPush } from "@/lib/expo-push";
 import { ukToday } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -23,19 +24,27 @@ export async function GET(request: NextRequest) {
   const album = day?.albums as unknown as { title: string; artist: string; release_year: number | null } | null;
   if (!album) return NextResponse.json({ skipped: "No album scheduled today" });
 
-  const { data: subs, error } = await admin
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .or(`last_sent_day.is.null,last_sent_day.neq.${today}`);
-  if (error) return NextResponse.json({ error: "Couldn't read devices" }, { status: 500 });
+  const notSentToday = `last_sent_day.is.null,last_sent_day.neq.${today}`;
+  const [{ data: subs, error }, { data: tokens, error: tokenError }] = await Promise.all([
+    admin.from("push_subscriptions").select("id, endpoint, p256dh, auth").or(notSentToday),
+    admin.from("device_tokens").select("id, token").or(notSentToday),
+  ]);
+  if (error || tokenError) return NextResponse.json({ error: "Couldn't read devices" }, { status: 500 });
 
-  const result = await sendPush(admin, subs ?? [], {
-    title: `Today's album: ${album.title}`,
-    body: `${album.artist}${album.release_year ? ` · ${album.release_year}` : ""}. Listen start to finish, then score it.`,
-    url: "/",
-    tag: `daily-${today}`,
+  const title = `Today's album: ${album.title}`;
+  const body = `${album.artist}${album.release_year ? ` · ${album.release_year}` : ""}. Listen start to finish, then score it.`;
+
+  // Browsers and home-screen web apps.
+  const web = await sendPush(admin, subs ?? [], { title, body, url: "/", tag: `daily-${today}` });
+  if (web.sentIds.length) await admin.from("push_subscriptions").update({ last_sent_day: today }).in("id", web.sentIds);
+
+  // The iPhone and Android app.
+  const app = await sendAppPush(admin, tokens ?? [], { title, body, data: { path: "/" } });
+  if (app.sentIds.length) await admin.from("device_tokens").update({ last_sent_day: today }).in("id", app.sentIds);
+
+  return NextResponse.json({
+    day: today,
+    web: { sent: web.sentIds.length, failed: web.failed, removed: web.removed },
+    app: { sent: app.sentIds.length, failed: app.failed, removed: app.removed },
   });
-  if (result.sentIds.length) await admin.from("push_subscriptions").update({ last_sent_day: today }).in("id", result.sentIds);
-
-  return NextResponse.json({ day: today, sent: result.sentIds.length, failed: result.failed, removed: result.removed });
 }

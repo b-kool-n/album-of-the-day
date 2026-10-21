@@ -5,10 +5,10 @@ import { AuthForm } from "./AuthForm";
 
 export const metadata = { title: "Sign in · Album of the Day" };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string; deleted?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string; error?: string; deleted?: string; confirmed?: string }> }) {
   const { profile } = await getViewer();
   if (profile) redirect("/");
-  const { mode, error, deleted } = await searchParams;
+  const { mode, error, deleted, confirmed } = await searchParams;
   if (deleted) {
     return (
       <div className="auth">
@@ -23,6 +23,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <div className="auth">
       <h1>{signUp ? "Join in" : "Sign in"}</h1>
       <p className="msg">{signUp ? "Make an account to score albums and keep your history." : "Welcome back."}</p>
+      {confirmed && (
+        // Email links from accounts made in the phone app land here.
+        <p className="msg ok" role="status">Your email is confirmed. If you made your account in the app, go back to it and sign in there. Or sign in here.</p>
+      )}
       {error === "link" && (
         <p className="msg err" role="alert">That link has expired or was already used. Sign in with your email and password.</p>
       )}
