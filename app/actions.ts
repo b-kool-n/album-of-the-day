@@ -57,8 +57,8 @@ function score(formData: FormData, key: string): number | null {
   const raw = formData.get(key);
   if (raw == null || raw === "") return null;
   const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0 || n > 10 || Math.round(n * 2) !== n * 2) return NaN;
-  return n;
+  if (!Number.isFinite(n) || n < 0 || n > 10) return NaN;
+  return Math.round(n * 10) / 10; // one decimal place
 }
 
 export async function saveScores(_prev: ScoreState, formData: FormData): Promise<ScoreState> {
@@ -76,7 +76,7 @@ export async function saveScores(_prev: ScoreState, formData: FormData): Promise
     relisten: score(formData, "relisten"),
   };
   const missing = Object.entries(values).some(([k, v]) => (k === "nostalgia" ? !newToMe && (v == null || Number.isNaN(v)) : v == null || Number.isNaN(v)));
-  if (missing) return { error: "Each score must be between 0 and 10, in half points." };
+  if (missing) return { error: "Each score must be between 0 and 10." };
 
   const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;
   const row = { ...values, new_to_me: newToMe, note };

@@ -7,6 +7,7 @@ import { formatDay, ukToday } from "@/lib/dates";
 import { MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Deck } from "./Sleeve";
+import { SpotifyMark } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
 import { Results, type DayNote } from "./Results";
 import { Comments, type Comment } from "./Comments";
@@ -98,7 +99,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
 
   if (!data) {
     return (
-      <Screen brand={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
+      <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
         {error ? <Empty title="Couldn't load">{error}</Empty> : <Loading />}
       </Screen>
     );
@@ -106,7 +107,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
 
   if (!data.album) {
     return (
-      <Screen brand={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
+      <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
         <Empty title="No album yet">Nothing is scheduled for {formatDay(day, true)}. Check back later.</Empty>
       </Screen>
     );
@@ -116,7 +117,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
   const editable = !mine || mine.created_day === today;
 
   return (
-    <Screen brand={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
+    <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
       <Deck album={album} number={number} />
 
       <T v="eyebrow">No. {number} · {formatDay(day)}{isToday ? " · Today" : ""}</T>
@@ -137,7 +138,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         accessibilityHint="Opens the album in Spotify"
         style={({ pressed }) => [st.listen, pressed && { opacity: 0.8 }]}
       >
-        <View style={st.listenDot} />
+        <SpotifyMark size={20} />
         <Text style={st.listenText}>Listen on Spotify</Text>
       </Pressable>
       <T v="small" style={{ marginTop: 8 }}>Play it start to finish, then come back and score it.</T>
@@ -202,7 +203,6 @@ const st = StyleSheet.create({
   artist: { fontFamily: F.semibold, fontSize: 19, lineHeight: 24, marginTop: 6 },
   facts: { flexDirection: "row", flexWrap: "wrap", columnGap: 18, rowGap: 4, marginTop: 12 },
   listen: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 10, marginTop: 18, paddingVertical: 13, paddingHorizontal: 20, borderRadius: 999, backgroundColor: C.orange, minHeight: 48 },
-  listenDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: C.onOrange },
   listenText: { fontFamily: F.bold, fontSize: 16, color: C.onOrange },
   locked: { flexDirection: "row", gap: 8, marginTop: 14 },
   ls: { flex: 1, padding: 10, borderRadius: 10, backgroundColor: C.bg },

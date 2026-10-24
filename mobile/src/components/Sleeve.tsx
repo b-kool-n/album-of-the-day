@@ -61,22 +61,24 @@ export function Deck({ album, number }: { album: SleeveAlbum; number?: number })
     <View style={{ width: "100%", marginTop: 20, marginBottom: 16 }} onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}>
       {w > 0 && (
         <View style={{ width: w, height: w / 1.32 }}>
+          <View style={{ position: "absolute", left: 0, top: 0, shadowColor: "#000", shadowOpacity: 0.7, shadowRadius: 17, shadowOffset: { width: 0, height: 12 }, elevation: 12 }}>
+            <Sleeve album={album} size={sleeve} number={number} />
+          </View>
+          {/* The record sits on top of the sleeve and rolls out to the right, turning as it goes. */}
           <Animated.View
             style={{
               position: "absolute",
               right: 0,
               top: w * 0.03,
+              elevation: 14,
               transform: [
                 { translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [-disc * 0.34, 0] }) },
-                { rotate: slide.interpolate({ inputRange: [0, 1], outputRange: ["-40deg", "0deg"] }) },
+                { rotate: slide.interpolate({ inputRange: [0, 1], outputRange: ["-120deg", "0deg"] }) },
               ],
             }}
           >
             <Disc size={disc} />
           </Animated.View>
-          <View style={{ position: "absolute", left: 0, top: 0, shadowColor: "#000", shadowOpacity: 0.7, shadowRadius: 17, shadowOffset: { width: 0, height: 12 }, elevation: 12 }}>
-            <Sleeve album={album} size={sleeve} number={number} />
-          </View>
         </View>
       )}
     </View>

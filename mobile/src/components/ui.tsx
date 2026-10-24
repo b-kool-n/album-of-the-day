@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch as RNSwitch,
@@ -15,7 +16,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F } from "@/lib/theme";
 import { Logo, Disc } from "./Logo";
 
@@ -36,13 +37,19 @@ export function Screen({
   refreshing = false,
   brand = true,
   top,
+  tabs = true,
 }: {
   children: ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
   brand?: boolean;
   top?: ReactNode;
+  /** False on pages opened over the tabs (a past day), which have no tab bar to clear. */
+  tabs?: boolean;
 }) {
+  const insets = useSafeAreaInsets();
+  // On iPhone the tab bar floats over the page, so leave room to scroll the last item clear of it.
+  const bottom = insets.bottom + (tabs && Platform.OS === "ios" ? 96 : 40);
   return (
     <SafeAreaView style={s.screen} edges={["top", "left", "right"]}>
       {brand && (
@@ -54,7 +61,8 @@ export function Screen({
       {top}
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={s.scrollInner}
+        contentContainerStyle={[s.scrollInner, { paddingBottom: bottom }]}
+        scrollIndicatorInsets={{ bottom: bottom - 40 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         automaticallyAdjustKeyboardInsets
@@ -228,7 +236,7 @@ export const s = StyleSheet.create({
   brandBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
   wordmark: { fontFamily: F.display, fontSize: 22, lineHeight: 24, textTransform: "uppercase", letterSpacing: -0.2 },
   scroll: { flex: 1 },
-  scrollInner: { paddingHorizontal: 16, paddingBottom: 48, width: "100%", maxWidth: 560, alignSelf: "center" },
+  scrollInner: { paddingHorizontal: 16, width: "100%", maxWidth: 560, alignSelf: "center" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, minHeight: 240 },
   empty: { alignItems: "center", gap: 12, paddingVertical: 48, paddingHorizontal: 12 },
 

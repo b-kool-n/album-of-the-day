@@ -55,14 +55,12 @@ export function ScoreForm({ day, userId, isToday, mine, onSaved }: Props) {
   return (
     <Panel
       title={mine ? "Change your scores" : "Score it"}
-      sub={mine ? "You can change these until midnight UK time." : isToday ? "Out of 10, in half points." : "Late score for a past day. Out of 10, in half points."}
+      sub={mine ? "You can change these until midnight UK time." : isToday ? "Out of 10, to one decimal place." : "Late score for a past day. Out of 10, to one decimal place."}
     >
-      <Toggle label="New to me" detail="Turn on if you hadn't heard it before. Nostalgia is left out." value={newToMe} onChange={setNewToMe} />
-
       {MEASURES.map((m, i) => {
         const off = m.key === "nostalgia" && newToMe;
         return (
-          <View key={m.key} style={[st.row, i === MEASURES.length - 1 && { borderBottomWidth: 0 }]}>
+          <View key={m.key} style={[st.row, i === MEASURES.length - 1 && { borderBottomWidth: 0, paddingBottom: 0 }]}>
             <View style={st.rowHead}>
               <T style={[{ fontFamily: F.semibold, flex: 1 }, off && { color: C.muted }]}>{m.name}</T>
               <T style={[st.val, off && { color: C.muted }]}>{off ? "–" : oneDecimal(values[m.key])}</T>
@@ -72,7 +70,7 @@ export function ScoreForm({ day, userId, isToday, mine, onSaved }: Props) {
               style={st.slider}
               minimumValue={0}
               maximumValue={10}
-              step={0.5}
+              step={0.1}
               value={values[m.key]}
               disabled={off}
               minimumTrackTintColor={off ? C.line : C.orange}
@@ -81,9 +79,11 @@ export function ScoreForm({ day, userId, isToday, mine, onSaved }: Props) {
               accessibilityLabel={m.name}
               accessibilityValue={{ min: 0, max: 10, now: values[m.key], text: off ? "Left out" : `${oneDecimal(values[m.key])} out of 10` }}
               onValueChange={(v) => {
-                const n = Math.round(v * 2) / 2;
-                if (n !== values[m.key]) {
-                  if (Platform.OS !== "web") Haptics.selectionAsync();
+                const n = Math.round(v * 10) / 10;
+                const was = values[m.key];
+                if (n !== was) {
+                  // A light tick each time it passes a whole number.
+                  if (Platform.OS !== "web" && Math.floor(n) !== Math.floor(was)) Haptics.selectionAsync();
                   setValues((prev) => ({ ...prev, [m.key]: n }));
                 }
               }}
@@ -91,6 +91,9 @@ export function ScoreForm({ day, userId, isToday, mine, onSaved }: Props) {
           </View>
         );
       })}
+
+      {/* Straight under Nostalgia, which it switches off. */}
+      <Toggle label="New to me" detail="Turn on if you hadn't heard it before. Nostalgia is left out." value={newToMe} onChange={setNewToMe} />
 
       <Field
         label="Note (optional)"

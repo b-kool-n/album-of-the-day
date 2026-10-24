@@ -27,21 +27,10 @@ export function ScoreForm({ day, initial, isToday }: { day: string; initial: Ini
         {initial
           ? "You can change these until midnight UK time."
           : isToday
-            ? "Out of 10, in half points."
-            : "Late score for a past day. Out of 10, in half points."}
+            ? "Out of 10, to one decimal place."
+            : "Late score for a past day. Out of 10, to one decimal place."}
       </div>
       <input type="hidden" name="day" value={day} />
-
-      <div className="switch">
-        <div className="txt" id="new-label">
-          New to me
-          <small>Turn on if you hadn&apos;t heard it before. Nostalgia is left out.</small>
-        </div>
-        <label className="toggle">
-          <input type="checkbox" name="new_to_me" aria-labelledby="new-label" checked={newToMe} onChange={(e) => setNewToMe(e.target.checked)} />
-          <span />
-        </label>
-      </div>
 
       {MEASURES.map((m) => {
         const off = m.key === "nostalgia" && newToMe;
@@ -56,14 +45,26 @@ export function ScoreForm({ day, initial, isToday }: { day: string; initial: Ini
               name={m.key}
               min={0}
               max={10}
-              step={0.5}
+              step={0.1}
               value={values[m.key]}
               disabled={off}
-              onChange={(e) => setValues((v) => ({ ...v, [m.key]: Number(e.target.value) }))}
+              onChange={(e) => setValues((v) => ({ ...v, [m.key]: Math.round(Number(e.target.value) * 10) / 10 }))}
             />
           </div>
         );
       })}
+
+      {/* Straight under Nostalgia, which it switches off. */}
+      <div className="switch">
+        <div className="txt" id="new-label">
+          New to me
+          <small>Turn on if you hadn&apos;t heard it before. Nostalgia is left out.</small>
+        </div>
+        <label className="toggle">
+          <input type="checkbox" name="new_to_me" aria-labelledby="new-label" checked={newToMe} onChange={(e) => setNewToMe(e.target.checked)} />
+          <span />
+        </label>
+      </div>
 
       <label className="field-label" htmlFor="s-note">
         Note <span className="msg">(optional)</span>

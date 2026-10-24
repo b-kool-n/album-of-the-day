@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
@@ -15,10 +15,17 @@ const STEPS = [
   { tab: "Account", body: "See your account overview, choose your notification settings, leave feedback and manage your account." },
 ] as const;
 
+// Where the middle of each tab sits, as a share of the screen width. iOS 26 draws the tab bar
+// as a floating pill and sizes each tab to its label (measured from a real iPhone); elsewhere
+// the five tabs share the full width equally.
+const IOS_PILL = Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
+const TAB_CENTRES = IOS_PILL ? [0.157, 0.339, 0.518, 0.681, 0.842] : [0.1, 0.3, 0.5, 0.7, 0.9];
+
 // First sign-in tour: a card above the tab bar that points at each tab in turn.
 export function Tour() {
   const { session, refreshProfile } = useSession();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [i, setI] = useState(0);
   const [open, setOpen] = useState(true);
   const step = STEPS[i];
@@ -46,13 +53,9 @@ export function Tour() {
               </View>
             </View>
           </View>
-          {/* An arrow pointing down at the tab being explained. The tabs share the bar's width equally. */}
+          {/* An arrow pointing down at the tab being explained. */}
           <View style={st.tabs} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            {STEPS.map((s, n) => (
-              <View key={s.tab} style={st.tab}>
-                {n === i && <Text style={st.arrow}>▼</Text>}
-              </View>
-            ))}
+            <Text style={[st.arrow, { left: TAB_CENTRES[i] * width - 9 }]}>▼</Text>
           </View>
         </View>
       </View>
@@ -66,7 +69,6 @@ const st = StyleSheet.create({
   card: { backgroundColor: C.surface, borderWidth: 1, borderColor: C.orange, borderRadius: 16, padding: 18, maxWidth: 520, width: "100%", alignSelf: "center" },
   title: { fontFamily: F.display, fontSize: 28, lineHeight: 30, textTransform: "uppercase", marginTop: 4 },
   foot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16, gap: 10 },
-  tabs: { flexDirection: "row", marginTop: 10, marginHorizontal: -16 },
-  tab: { flex: 1, alignItems: "center", justifyContent: "flex-end", minHeight: 22 },
-  arrow: { color: C.orange, fontSize: 18 },
+  tabs: { height: 24, marginTop: 10, marginHorizontal: -16 },
+  arrow: { position: "absolute", bottom: 0, width: 18, textAlign: "center", color: C.orange, fontSize: 18, lineHeight: 22 },
 });

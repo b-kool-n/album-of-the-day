@@ -40,10 +40,11 @@ export type DayAverages = {
 };
 
 export const MEASURES = [
-  { key: "back_to_back", name: "Back-to-back / lyrical quality", short: "Back-to-back", question: "Does it hold up start to finish, and are the words any good?" },
+  { key: "back_to_back", name: "Back-to-back song quality", short: "Back-to-back", question: "Does every song hold up, start to finish?" },
   { key: "vibes", name: "Vibes", short: "Vibes", question: "How does it make you feel?" },
-  { key: "nostalgia", name: "Nostalgia", short: "Nostalgia", question: "Does it take you back to a time, a place or a memory?" },
   { key: "relisten", name: "Relistenability", short: "Relisten", question: "Would you choose to put it on again?" },
+  // Last, because "New to me" sits straight under it and leaves it out.
+  { key: "nostalgia", name: "Nostalgia", short: "Nostalgia", question: "Does it take you back to a time, a place or a memory?" },
 ] as const;
 
 export type MeasureKey = (typeof MEASURES)[number]["key"];
