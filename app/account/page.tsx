@@ -71,9 +71,12 @@ export default async function AccountPage() {
 
       <section className="panel">
         <h2>Sign out or leave</h2>
-        <form action={signOut} className="inline" style={{ marginTop: 12 }}>
-          <button className="btn ghost" type="submit">Sign out</button>
-        </form>
+        <div className="inline" style={{ marginTop: 12 }}>
+          <form action={signOut}>
+            <button className="btn ghost" type="submit">Sign out</button>
+          </form>
+          <Link className="btn ghost" href="/account/password">Change password</Link>
+        </div>
         <DeleteAccountForm />
       </section>
     </>

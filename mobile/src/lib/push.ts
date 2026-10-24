@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import { AndroidImportance } from "expo-notifications";
 import { Platform } from "react-native";
 import { supabase } from "./supabase";
+import { ukToday } from "./dates";
 
 const TOKEN_KEY = "push_token";
 
@@ -61,4 +62,40 @@ export async function notificationsOn(): Promise<boolean> {
   if (!token) return false;
   const { data } = await supabase.from("device_tokens").select("id").eq("token", token).maybeSingle();
   return !!data;
+}
+
+// ===== "Finished? Score it" reminder =====
+// Set on the phone itself when someone taps Listen on Spotify, and cancelled once they score.
+// Only set if notifications are already allowed; it never asks for permission by itself.
+
+const REMINDER_KEY = "score_reminder";
+const TWO_HOURS = 2 * 60 * 60;
+
+export async function setScoreReminder(title: string, day: string): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const { granted } = await Notifications.getPermissionsAsync();
+    if (!granted) return;
+    await cancelScoreReminder();
+    // Skip it if two hours from now is already tomorrow's album.
+    if (ukToday(new Date(Date.now() + TWO_HOURS * 1000)) !== day) return;
+    const id = await Notifications.scheduleNotificationAsync({
+      content: { title: `Finished ${title}?`, body: "Give it a score before midnight.", data: { path: "/" } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: TWO_HOURS, channelId: "default" },
+    });
+    localStorage.setItem(REMINDER_KEY, id);
+  } catch {
+    // A missed reminder isn't worth bothering anyone about.
+  }
+}
+
+export async function cancelScoreReminder(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const id = localStorage.getItem(REMINDER_KEY);
+    if (id) await Notifications.cancelScheduledNotificationAsync(id);
+    localStorage.removeItem(REMINDER_KEY);
+  } catch {
+    // Nothing to cancel.
+  }
 }

@@ -54,3 +54,30 @@ export async function signOut() {
   revalidatePath("/", "layout");
   redirect("/");
 }
+
+// ===== Forgotten password =====
+
+export async function sendReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: "Enter the email you signed up with." };
+  const supabase = await createClient();
+  // The email's link goes to /auth/confirm (see the "Reset password" email template), which signs
+  // the person in and opens the page for choosing a new password. It works in any browser.
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await siteOrigin()}/account/password` });
+  // Same reply whether or not there's an account, so the form can't be used to check who has one.
+  return { info: "If there's an account with that email, a link to choose a new password is on its way. It works for an hour." };
+}
+
+// ===== Apple and Google =====
+
+export async function continueWith(formData: FormData) {
+  const provider = String(formData.get("provider") ?? "");
+  if (provider !== "apple" && provider !== "google") return;
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: `${await siteOrigin()}/auth/callback` },
+  });
+  if (error || !data.url) redirect("/login?error=provider");
+  redirect(data.url);
+}

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/supabase/server";
 import { AuthForm } from "./AuthForm";
+import { ResetForm } from "./ResetForm";
+import { continueWith } from "./actions";
+import { enabledProviders } from "@/lib/auth-providers";
 
 export const metadata = { title: "Sign in · Album of the Day" };
 
@@ -18,7 +21,19 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </div>
     );
   }
+  if (mode === "reset") {
+    return (
+      <div className="auth">
+        <h1>Forgotten password</h1>
+        <p className="msg">Enter the email you signed up with and we&apos;ll send you a link to choose a new password.</p>
+        <ResetForm />
+        <p className="switch-mode">Remembered it? <Link href="/login">Sign in</Link></p>
+      </div>
+    );
+  }
+
   const signUp = mode === "signup";
+  const providers = await enabledProviders();
   return (
     <div className="auth">
       <h1>{signUp ? "Join in" : "Sign in"}</h1>
@@ -30,7 +45,28 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       {error === "link" && (
         <p className="msg err" role="alert">That link has expired or was already used. Sign in with your email and password.</p>
       )}
+      {error === "provider" && (
+        <p className="msg err" role="alert">That sign-in option isn&apos;t available right now. Use your email and password instead.</p>
+      )}
+      {(providers.apple || providers.google) && (
+        <div className="providers">
+          {providers.apple && (
+            <form action={continueWith}>
+              <input type="hidden" name="provider" value="apple" />
+              <button className="btn provider" type="submit">Continue with Apple</button>
+            </form>
+          )}
+          {providers.google && (
+            <form action={continueWith}>
+              <input type="hidden" name="provider" value="google" />
+              <button className="btn provider" type="submit">Continue with Google</button>
+            </form>
+          )}
+          <p className="or"><span>or use your email</span></p>
+        </div>
+      )}
       <AuthForm mode={signUp ? "signup" : "signin"} />
+      {!signUp && <p className="switch-mode"><Link href="/login?mode=reset">Forgotten your password?</Link></p>}
       <p className="switch-mode">
         {signUp ? (
           <>Already have an account? <Link href="/login">Sign in</Link></>

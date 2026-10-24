@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
+import { createAdminClient, hasAdminKey, type AdminClient } from "@/lib/supabase/admin";
+import { fetchSpotifyAlbum } from "@/lib/spotify";
+import type { Track } from "@/lib/types";
 import { sendPush } from "@/lib/push";
 import { sendAppPush } from "@/lib/expo-push";
 import { ukToday } from "@/lib/dates";
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   }
   if (!hasAdminKey()) return NextResponse.json({ skipped: "SUPABASE_SECRET_KEY is not set" });
+  await addSongLinks(createAdminClient(), ukToday());
 
   const ukHour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }).format(new Date()));
   if (ukHour < 8 || ukHour > 9) return NextResponse.json({ skipped: `It's ${ukHour}:00 in the UK; sending happens from 8am` });
@@ -47,4 +50,18 @@ export async function GET(request: NextRequest) {
     web: { sent: web.sentIds.length, failed: web.failed, removed: web.removed },
     app: { sent: app.sentIds.length, failed: app.failed, removed: app.removed },
   });
+}
+
+// Albums added before song links were stored get them on the morning they play, so the
+// tracklist can open each song straight in Spotify.
+async function addSongLinks(admin: AdminClient, day: string) {
+  try {
+    const { data } = await admin.from("album_days").select("albums(id, spotify_id, tracks)").eq("day", day).maybeSingle();
+    const album = data?.albums as unknown as { id: string; spotify_id: string | null; tracks: Track[] } | null;
+    if (!album?.spotify_id || (album.tracks.length > 0 && album.tracks.every((t) => t.url))) return;
+    const fresh = await fetchSpotifyAlbum(album.spotify_id);
+    await admin.from("albums").update({ tracks: fresh.tracks }).eq("id", album.id);
+  } catch {
+    // Not worth failing the morning notification over.
+  }
 }

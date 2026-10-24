@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Alert, Platform, StyleSheet, View } from "react-native";
+import * as Haptics from "expo-haptics";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { formatWhen, ukToday } from "@/lib/dates";
 import { C, F } from "@/lib/theme";
 import { Button, Field, Message, Panel, T } from "./ui";
 
 export type Comment = { id: string; user_id: string; body: string; created_at: string; hidden: boolean; profiles: { display_name: string } | null };
+export type Reaction = { comment_id: string; user_id: string; emoji: string };
+
+export const EMOJI = ["🔥", "❤️", "😂", "👍"] as const;
 
 type Props = {
   day: string;
@@ -15,10 +19,11 @@ type Props = {
   hasScored: boolean;
   comments: Comment[];
   reported: string[];
+  reactions: Reaction[];
   onChange: () => void;
 };
 
-export function Comments({ day, userId, isAdmin, isBlocked, hasScored, comments, reported, onChange }: Props) {
+export function Comments({ day, userId, isAdmin, isBlocked, hasScored, comments, reported, reactions, onChange }: Props) {
   // Kept closed until you've scored, so other people's opinions don't sway yours.
   const [show, setShow] = useState(false);
   const n = comments.length;
@@ -31,7 +36,7 @@ export function Comments({ day, userId, isAdmin, isBlocked, hasScored, comments,
       ) : open ? (
         <View style={{ marginTop: 6 }}>
           {comments.map((c) => (
-            <CommentRow key={c.id} c={c} day={day} userId={userId} isAdmin={isAdmin} alreadyReported={reported.includes(c.id)} onChange={onChange} />
+            <CommentRow key={c.id} c={c} day={day} userId={userId} isAdmin={isAdmin} canReact={!isBlocked} alreadyReported={reported.includes(c.id)} reactions={reactions.filter((r) => r.comment_id === c.id)} onChange={onChange} />
           ))}
         </View>
       ) : (
@@ -49,7 +54,9 @@ export function Comments({ day, userId, isAdmin, isBlocked, hasScored, comments,
   );
 }
 
-function CommentRow({ c, day, userId, isAdmin, alreadyReported, onChange }: { c: Comment; day: string; userId: string; isAdmin: boolean; alreadyReported: boolean; onChange: () => void }) {
+type RowProps = { c: Comment; day: string; userId: string; isAdmin: boolean; canReact: boolean; alreadyReported: boolean; reactions: Reaction[]; onChange: () => void };
+
+function CommentRow({ c, userId, isAdmin, canReact, alreadyReported, reactions, onChange }: RowProps) {
   const mine = c.user_id === userId;
   const [reporting, setReporting] = useState(false);
   const [reason, setReason] = useState("");
@@ -83,6 +90,7 @@ function CommentRow({ c, day, userId, isAdmin, alreadyReported, onChange }: { c:
       </View>
       {c.hidden && <T v="small" style={{ marginTop: 2 }}>Hidden from others after reports, until the curator reviews it.</T>}
       <T style={{ marginTop: 4 }}>{c.body}</T>
+      <Reactions key={reactions.map((r) => r.user_id + r.emoji).join()} commentId={c.id} userId={userId} initial={reactions} canReact={canReact} />
       <View style={st.actions}>
         {(mine || isAdmin) && <Button kind="link" label="Delete" onPress={confirmDelete} />}
         {!mine && (sent ? <T v="small">Reported. Thanks.</T> : !reporting && <Button kind="link" label="Report" onPress={() => setReporting(true)} />)}
@@ -99,6 +107,49 @@ function CommentRow({ c, day, userId, isAdmin, alreadyReported, onChange }: { c:
     </View>
   );
 }
+
+// Four quick reactions under each comment. Tap to add yours, tap again to take it back.
+function Reactions({ commentId, userId, initial, canReact }: { commentId: string; userId: string; initial: Reaction[]; canReact: boolean }) {
+  const [list, setList] = useState(initial);
+
+  async function toggle(emoji: string) {
+    if (!canReact) return;
+    const had = list.some((r) => r.user_id === userId && r.emoji === emoji);
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    // Show the change straight away, then save it.
+    setList((l) => (had ? l.filter((r) => !(r.user_id === userId && r.emoji === emoji)) : [...l, { comment_id: commentId, user_id: userId, emoji }]));
+    const { error } = had
+      ? await supabase.from("comment_reactions").delete().eq("comment_id", commentId).eq("user_id", userId).eq("emoji", emoji)
+      : await supabase.from("comment_reactions").insert({ comment_id: commentId, user_id: userId, emoji });
+    if (error) setList(initial);
+  }
+
+  return (
+    <View style={st.reactions}>
+      {EMOJI.map((e) => {
+        const count = list.filter((r) => r.emoji === e).length;
+        const mineOn = list.some((r) => r.user_id === userId && r.emoji === e);
+        return (
+          <Pressable
+            key={e}
+            onPress={() => toggle(e)}
+            disabled={!canReact}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityState={{ selected: mineOn }}
+            accessibilityLabel={`${EMOJI_NAMES[e]}, ${count}`}
+            style={({ pressed }) => [st.reaction, mineOn && st.reactionOn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={st.reactionEmoji}>{e}</Text>
+            {count > 0 && <Text style={[st.reactionCount, mineOn && { color: C.orange }]}>{count}</Text>}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const EMOJI_NAMES: Record<string, string> = { "🔥": "Fire", "❤️": "Love", "😂": "Laughing", "👍": "Thumbs up" };
 
 function CommentForm({ day, userId, onPosted }: { day: string; userId: string; onPosted: () => void }) {
   const [body, setBody] = useState("");
@@ -139,4 +190,9 @@ const st = StyleSheet.create({
   by: { flexDirection: "row", alignItems: "baseline", gap: 8 },
   time: { fontFamily: F.mono, fontSize: 12, color: C.muted },
   actions: { flexDirection: "row", gap: 16, marginTop: 6 },
+  reactions: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
+  reaction: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: C.line, minHeight: 32 },
+  reactionOn: { borderColor: C.orange, backgroundColor: C.soft },
+  reactionEmoji: { fontSize: 15 },
+  reactionCount: { fontFamily: F.monoBold, fontSize: 12, color: C.muted },
 });

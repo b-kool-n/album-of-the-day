@@ -1,23 +1,26 @@
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
 import { useLoad } from "@/lib/useLoad";
 import { formatDay } from "@/lib/dates";
-import { MEASURES, oneDecimal, type Album, type MeasureKey, type Rating } from "@/lib/types";
+import { MEASURES, oneDecimal, spotifyLink, type Album, type MeasureKey, type Rating } from "@/lib/types";
+import { useStreak } from "@/lib/streak";
 import { C, F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
+import { CoverGrid } from "@/components/CoverGrid";
 import { Button, Chip, Empty, Loading, Screen, T } from "@/components/ui";
 
-type Row = Rating & { album_days: { albums: Pick<Album, "artist" | "title" | "cover_url"> } };
+type Row = Rating & { album_days: { albums: Pick<Album, "artist" | "title" | "cover_url" | "spotify_url"> } };
 
 export default function YourScores() {
   const { session, profile } = useSession();
+  const { streak } = useStreak();
   const userId = session!.user.id;
   const { data, error, refreshing, refresh } = useLoad(async () => {
     const { data: rows, error: e } = await supabase
       .from("ratings")
-      .select("*, album_days(albums(artist, title, cover_url))")
+      .select("*, album_days(albums(artist, title, cover_url, spotify_url))")
       .eq("user_id", userId)
       .order("day", { ascending: false });
     if (e) throw new Error("Couldn't load your scores. Pull down to try again.");
@@ -42,6 +45,9 @@ export default function YourScores() {
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
   };
 
+  // Up to six, best first, leaving out anything below 6.
+  const shelf = [...data].filter((r) => Number(r.relisten) >= 6).sort((a, b) => Number(b.relisten) - Number(a.relisten) || b.day.localeCompare(a.day)).slice(0, 6);
+
   return (
     <Screen onRefresh={refresh} refreshing={refreshing}>
       <T v="title" style={{ marginTop: 20 }} accessibilityRole="header">Your scores</T>
@@ -49,7 +55,7 @@ export default function YourScores() {
       <View style={st.summary}>
         <Stat k="Albums scored" v={String(data.length)} />
         <Stat k="Your average" v={oneDecimal(avg("overall"))} />
-        <Stat k="New to you" v={String(data.filter((r) => r.new_to_me).length)} />
+        <Stat k="Day streak" v={String(streak.current)} hot={streak.current > 0} />
       </View>
       <View style={st.measures}>
         {MEASURES.map((m) => (
@@ -57,7 +63,36 @@ export default function YourScores() {
             {m.short} <T style={{ fontFamily: F.monoBold, fontSize: 13 }}>{oneDecimal(avg(m.key))}</T>
           </T>
         ))}
+        <T v="small">
+          New to you <T style={{ fontFamily: F.monoBold, fontSize: 13 }}>{data.filter((r) => r.new_to_me).length}</T>
+        </T>
+        <T v="small">
+          Best streak <T style={{ fontFamily: F.monoBold, fontSize: 13 }}>{streak.best}</T>
+        </T>
       </View>
+
+      {shelf.length > 0 && (
+        <>
+          <T v="h2" style={{ marginTop: 28 }} accessibilityRole="header">Relisten shelf</T>
+          <T v="muted" style={{ marginTop: 2, marginBottom: 12 }}>Your highest Relistenability scores. Tap one to play it on Spotify.</T>
+          <CoverGrid
+            items={shelf.map((r) => {
+              const a = r.album_days.albums;
+              return {
+                key: r.day,
+                album: a,
+                badge: oneDecimal(r.relisten),
+                hot: true,
+                caption: a.title,
+                label: `${a.title} by ${a.artist}, relisten score ${oneDecimal(r.relisten)}. Opens in Spotify.`,
+                onPress: () => Linking.openURL(spotifyLink(a)),
+              };
+            })}
+          />
+        </>
+      )}
+
+      <T v="h2" style={{ marginTop: 28 }} accessibilityRole="header">Everything you&apos;ve scored</T>
       <View style={{ marginTop: 10 }}>
         {data.map((r) => {
           const a = r.album_days.albums;
@@ -92,11 +127,11 @@ export default function YourScores() {
   );
 }
 
-function Stat({ k, v }: { k: string; v: string }) {
+function Stat({ k, v, hot = false }: { k: string; v: string; hot?: boolean }) {
   return (
     <View style={st.stat}>
       <T style={{ fontSize: 12, lineHeight: 16, color: C.muted }}>{k}</T>
-      <T style={{ fontFamily: F.monoBold, fontSize: 24, lineHeight: 30 }}>{v}</T>
+      <T style={{ fontFamily: F.monoBold, fontSize: 24, lineHeight: 30, color: hot ? C.orange : C.ink }}>{v}</T>
     </View>
   );
 }

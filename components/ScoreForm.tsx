@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { saveScores, type ScoreState } from "@/app/actions";
 import { MEASURES, oneDecimal, type MeasureKey } from "@/lib/types";
 
@@ -16,6 +16,13 @@ export function ScoreForm({ day, initial, isToday }: { day: string; initial: Ini
   });
   const [newToMe, setNewToMe] = useState(initial?.new_to_me ?? false);
   const [note, setNote] = useState(initial?.note ?? "");
+
+  // After saving, take people straight to how their scores compare.
+  useEffect(() => {
+    if (!state.saved) return;
+    const t = setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    return () => clearTimeout(t);
+  }, [state]);
 
   const counted = MEASURES.filter((m) => !(m.key === "nostalgia" && newToMe)).map((m) => values[m.key]);
   const overall = Math.round((counted.reduce((a, b) => a + b, 0) / counted.length) * 10) / 10;

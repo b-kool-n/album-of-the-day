@@ -43,6 +43,28 @@ export async function reportComment(formData: FormData) {
   if (isIsoDate(day)) refreshDay(day);
 }
 
+const REACTIONS = ["🔥", "❤️", "😂", "👍"];
+
+// Adds your reaction to a comment, or takes it back if you'd already given that one.
+export async function toggleReaction(formData: FormData) {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  const id = String(formData.get("id") ?? "");
+  const day = String(formData.get("day") ?? "");
+  const emoji = String(formData.get("emoji") ?? "");
+  if (!REACTIONS.includes(emoji)) return;
+  const { data: existing } = await supabase
+    .from("comment_reactions")
+    .select("emoji")
+    .eq("comment_id", id)
+    .eq("user_id", userId)
+    .eq("emoji", emoji)
+    .maybeSingle();
+  if (existing) await supabase.from("comment_reactions").delete().eq("comment_id", id).eq("user_id", userId).eq("emoji", emoji);
+  else await supabase.from("comment_reactions").insert({ comment_id: id, user_id: userId, emoji });
+  if (isIsoDate(day)) refreshDay(day);
+}
+
 export async function deleteComment(formData: FormData) {
   const { supabase, userId } = await getViewer();
   if (!userId) return;

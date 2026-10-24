@@ -113,3 +113,20 @@ export async function sendTestPush(): Promise<FormState> {
     return { error: e instanceof Error ? e.message : "Couldn't send a test notification." };
   }
 }
+
+// ===== New password =====
+
+export async function setNewPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return { error: "That link has expired. Ask for a new one from the sign-in page." };
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) return { error: "Use a password of at least 8 characters." };
+  if (password !== String(formData.get("confirm") ?? "")) return { error: "The two passwords don't match." };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    if (/different|same/i.test(error.message)) return { error: "That's the password you already have. Choose a different one." };
+    if (/weak|pwned|leak/i.test(error.message)) return { error: "That password has appeared in a data leak elsewhere. Choose a different one." };
+    return { error: "Couldn't save it. Try again." };
+  }
+  return { done: "Saved. You can use your new password straight away, on the website and in the app." };
+}

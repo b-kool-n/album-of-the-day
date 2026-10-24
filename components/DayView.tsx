@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay, ukToday } from "@/lib/dates";
-import { MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type Rating } from "@/lib/types";
+import { MEASURES, isTopSong, oneDecimal, spotifyLink, trackLength, trackLink, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { Sleeve } from "./Sleeve";
 import { Disc } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
@@ -63,6 +63,30 @@ export async function DayView({ day }: { day: string }) {
         </a>
         <div className="hint">Play it start to finish, then come back and score it.</div>
       </div>
+
+      {album.tracks?.length > 0 && (
+        <details className="panel tracklist">
+          <summary>
+            <h2>Tracklist</h2>
+            <span className="msg">{album.tracks.length} songs · {Math.round(album.tracks.reduce((a, t) => a + t.duration_ms, 0) / 60000)} min</span>
+          </summary>
+          <ol>
+            {album.tracks.map((t) => {
+              const top = isTopSong(album, t);
+              return (
+                <li key={`${t.number}-${t.name}`} className={top ? "top" : undefined}>
+                  <a href={trackLink(album, t)} target="_blank" rel="noopener noreferrer">
+                    <span className="n num">{t.number}</span>
+                    <span className="nm">{t.name}{top && <span className="chip hot">Most played</span>}</span>
+                    <span className="len num">{trackLength(t.duration_ms)}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="hint">Tap a song to play it in Spotify.</p>
+        </details>
+      )}
 
       {!userId ? (
         <div className="panel">
@@ -126,7 +150,7 @@ async function Results({ day, mine, isToday }: { day: string; mine: Rating; isTo
   const n = avg?.ratings ?? 1;
 
   return (
-    <div className="panel">
+    <div className="panel" id="results">
       <div className="res-head">
         <div>
           <h2>{isToday ? "Today's scores" : "Scores for this day"}</h2>

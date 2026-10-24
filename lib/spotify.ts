@@ -58,7 +58,7 @@ export async function fetchSpotifyAlbum(albumId: string): Promise<SpotifyAlbum> 
     artists: { name: string }[];
     images: { url: string; width: number }[];
     external_urls: { spotify: string };
-    tracks: { items: { name: string; duration_ms: number; track_number: number; disc_number: number }[] };
+    tracks: { items: { id: string; name: string; duration_ms: number; track_number: number; disc_number: number; external_urls?: { spotify?: string } }[] };
   };
   const cover = [...(a.images ?? [])].sort((x, y) => (y.width ?? 0) - (x.width ?? 0))[0]?.url ?? null;
   return {
@@ -68,6 +68,6 @@ export async function fetchSpotifyAlbum(albumId: string): Promise<SpotifyAlbum> 
     release_year: a.release_date ? Number(a.release_date.slice(0, 4)) : null,
     cover_url: cover,
     spotify_url: a.external_urls?.spotify ?? `https://open.spotify.com/album/${a.id}`,
-    tracks: (a.tracks?.items ?? []).map((t, i) => ({ number: i + 1, name: t.name, duration_ms: t.duration_ms })),
+    tracks: (a.tracks?.items ?? []).map((t, i) => ({ number: i + 1, name: t.name, duration_ms: t.duration_ms, url: t.external_urls?.spotify ?? `https://open.spotify.com/track/${t.id}` })),
   };
 }

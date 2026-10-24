@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentRef, ReactNode, RefObject } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +19,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F } from "@/lib/theme";
 import { Logo, Disc } from "./Logo";
+import { StreakPill } from "./StreakPill";
 
 // ===== Text =====
 
@@ -38,8 +39,10 @@ export function Screen({
   brand = true,
   top,
   tabs = true,
+  scrollRef,
 }: {
   children: ReactNode;
+  scrollRef?: RefObject<ComponentRef<typeof ScrollView> | null>;
   onRefresh?: () => void;
   refreshing?: boolean;
   brand?: boolean;
@@ -55,11 +58,13 @@ export function Screen({
       {brand && (
         <View style={s.brandBar}>
           <Logo size={30} />
-          <T style={s.wordmark} accessibilityRole="header">Album of the Day</T>
+          <T style={s.wordmark} accessibilityRole="header" numberOfLines={1}>Album of the Day</T>
+          <StreakPill />
         </View>
       )}
       {top}
       <ScrollView
+        ref={scrollRef}
         style={s.scroll}
         contentContainerStyle={[s.scrollInner, { paddingBottom: bottom }]}
         scrollIndicatorInsets={{ bottom: bottom - 40 }}
@@ -204,9 +209,9 @@ export function Toggle({ label, detail, value, onChange, disabled }: { label: st
   );
 }
 
-export function Chip({ label, hot = false }: { label: string; hot?: boolean }) {
+export function Chip({ label, hot = false, style }: { label: string; hot?: boolean; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={[s.chip, hot && { borderColor: C.orange }]}>
+    <View style={[s.chip, hot && { borderColor: C.orange }, style]}>
       <Text style={[s.chipText, hot && { color: C.orange }]} maxFontSizeMultiplier={1.3}>{label}</Text>
     </View>
   );
@@ -234,7 +239,7 @@ export const s = StyleSheet.create({
 
   screen: { flex: 1, backgroundColor: C.bg },
   brandBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
-  wordmark: { fontFamily: F.display, fontSize: 22, lineHeight: 24, textTransform: "uppercase", letterSpacing: -0.2 },
+  wordmark: { flexShrink: 1, fontFamily: F.display, fontSize: 22, lineHeight: 24, textTransform: "uppercase", letterSpacing: -0.2 },
   scroll: { flex: 1 },
   scrollInner: { paddingHorizontal: 16, width: "100%", maxWidth: 560, alignSelf: "center" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, minHeight: 240 },

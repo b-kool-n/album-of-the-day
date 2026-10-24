@@ -1,16 +1,21 @@
 import { router } from "expo-router";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, type ComponentRef } from "react";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
 import { useLoad } from "@/lib/useLoad";
+import { useStreak } from "@/lib/streak";
+import { cancelScoreReminder, setScoreReminder } from "@/lib/push";
 import { formatDay, ukToday } from "@/lib/dates";
 import { MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Deck } from "./Sleeve";
+import { ShareScores } from "./ShareCard";
+import { Tracklist } from "./Tracklist";
 import { SpotifyMark } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
 import { Results, type DayNote } from "./Results";
-import { Comments, type Comment } from "./Comments";
+import { Comments, type Comment, type Reaction } from "./Comments";
 import { Button, Empty, Loading, Panel, Screen, T } from "./ui";
 
 type DayAlbum = Album & { profiles: { display_name: string } | null };
@@ -26,6 +31,7 @@ type DayData =
       notes: DayNote[];
       comments: Comment[];
       reported: string[];
+      reactions: Reaction[];
     };
 
 async function loadDay(day: string, userId: string): Promise<DayData> {
@@ -53,6 +59,11 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
   ]);
   const mine = (mineRow ?? null) as Rating | null;
 
+  const commentList = (commentRows ?? []) as unknown as Comment[];
+  const { data: reactionRows } = commentList.length
+    ? await supabase.from("comment_reactions").select("comment_id, user_id, emoji").in("comment_id", commentList.map((c) => c.id))
+    : { data: [] };
+
   let avg: DayAverages | null = null;
   let notes: DayNote[] = [];
   if (mine) {
@@ -79,17 +90,45 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
     mine,
     avg,
     notes,
-    comments: (commentRows ?? []) as unknown as Comment[],
+    comments: commentList,
     reported: (myReports ?? []).map((r) => r.comment_id as string),
+    reactions: (reactionRows ?? []) as Reaction[],
   };
 }
 
 export function DayView({ day, showBack = false }: { day: string; showBack?: boolean }) {
   const { session, profile } = useSession();
+  const { refreshStreak } = useStreak();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const resultsY = useRef<number | null>(null);
+  const jumpToResults = useRef(false);
   const userId = session!.user.id;
   const { data, error, refreshing, refresh, reload } = useLoad(() => loadDay(day, userId), `${day}:${userId}`);
   const today = ukToday();
   const isToday = day === today;
+  const scoredToday = isToday && !!data?.album && !!data.mine;
+
+  // Already scored (perhaps on the website)? Then the "Finished? Score it" reminder isn't needed.
+  useEffect(() => {
+    if (scoredToday) cancelScoreReminder();
+  }, [scoredToday]);
+
+  // After saving, take people straight to how their scores compare.
+  function scrollToResults() {
+    if (!jumpToResults.current || resultsY.current == null) return;
+    jumpToResults.current = false;
+    scrollRef.current?.scrollTo({ y: Math.max(0, resultsY.current - 12), animated: true });
+  }
+  useEffect(() => {
+    if (data) scrollToResults();
+  }, [data]);
+
+  function afterSave() {
+    cancelScoreReminder();
+    refreshStreak();
+    jumpToResults.current = true;
+    reload();
+  }
 
   const back = showBack ? (
     <Pressable onPress={() => (router.canGoBack() ? router.back() : router.navigate("/archive"))} accessibilityRole="button" style={st.back} hitSlop={8}>
@@ -117,7 +156,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
   const editable = !mine || mine.created_day === today;
 
   return (
-    <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing}>
+    <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing} scrollRef={scrollRef}>
       <Deck album={album} number={number} />
 
       <T v="eyebrow">No. {number} · {formatDay(day)}{isToday ? " · Today" : ""}</T>
@@ -133,7 +172,10 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
       </View>
 
       <Pressable
-        onPress={() => Linking.openURL(spotifyLink(album))}
+        onPress={() => {
+          Linking.openURL(spotifyLink(album));
+          if (isToday && !mine) setScoreReminder(album.title, day);
+        }}
         accessibilityRole="link"
         accessibilityHint="Opens the album in Spotify"
         style={({ pressed }) => [st.listen, pressed && { opacity: 0.8 }]}
@@ -142,6 +184,8 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         <Text style={st.listenText}>Listen on Spotify</Text>
       </Pressable>
       <T v="small" style={{ marginTop: 8 }}>Play it start to finish, then come back and score it.</T>
+
+      <Tracklist album={album} />
 
       {mine && !editable ? (
         <Panel title="Your scores" sub="Scores lock at midnight UK time on the day you give them.">
@@ -156,11 +200,24 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
           {mine.note ? <T style={{ marginTop: 12 }}>{mine.note}</T> : null}
         </Panel>
       ) : (
-        <ScoreForm key={mine?.updated_at ?? "new"} day={day} userId={userId} isToday={isToday} mine={mine} onSaved={reload} />
+        <ScoreForm key={mine?.updated_at ?? "new"} day={day} userId={userId} isToday={isToday} mine={mine} onSaved={afterSave} />
       )}
 
       {mine ? (
-        <Results mine={mine} avg={data.avg} notes={data.notes} isToday={isToday} />
+        <View
+          onLayout={(e) => {
+            resultsY.current = e.nativeEvent.layout.y;
+            scrollToResults();
+          }}
+        >
+          <Results
+            mine={mine}
+            avg={data.avg}
+            notes={data.notes}
+            isToday={isToday}
+            share={<ShareScores album={album} number={number} day={day} mine={mine} avg={data.avg} />}
+          />
+        </View>
       ) : (
         <Panel title={isToday ? "Today's scores" : "Scores for this day"}>
           <T v="muted" style={{ marginTop: 8 }}>
@@ -177,6 +234,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         hasScored={!!mine}
         comments={data.comments}
         reported={data.reported}
+        reactions={data.reactions}
         onChange={reload}
       />
 

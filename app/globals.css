@@ -271,3 +271,34 @@ details.danger > summary { color: var(--warn); }
   .form-grid { grid-template-columns: 1fr; }
   .locked-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Room for the sticky header when jumping to the results after saving. */
+#results { scroll-margin-top: 120px; }
+
+/* Quick reactions under each comment. */
+.reactions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.reactions form { margin: 0; }
+.reaction { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: none; font-size: 14px; }
+.reaction .num { font-size: 12px; font-weight: 600; color: var(--muted); }
+.reaction.on { border-color: var(--orange); background: var(--soft); }
+.reaction.on .num { color: var(--orange); }
+.reaction:disabled { opacity: .5; cursor: default; }
+
+/* Tracklist on the day page: closed until opened. */
+.tracklist summary { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.tracklist summary::-webkit-details-marker { display: none; }
+.tracklist summary::after { content: "Show"; color: var(--orange); font-weight: 600; font-size: 14px; }
+.tracklist[open] summary::after { content: "Hide"; }
+.tracklist ol { list-style: none; margin: 12px 0 0; padding: 0; }
+.tracklist li a { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; min-height: 44px; }
+.tracklist .n { width: 22px; text-align: right; color: var(--muted); font-size: 13px; }
+.tracklist .nm { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tracklist .top .nm { color: var(--orange); }
+.tracklist .len { color: var(--muted); font-size: 13px; }
+
+/* "Continue with Apple / Google" on the sign-in page. */
+.providers { display: grid; gap: 10px; margin-top: 18px; }
+.providers form { margin: 0; }
+.btn.provider { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--ink); color: #000; }
+.providers .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+.providers .or::before, .providers .or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }

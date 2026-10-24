@@ -1,8 +1,10 @@
 import * as WebBrowser from "expo-web-browser";
-import { useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WEB_URL, supabase } from "@/lib/supabase";
+import { enabledProviders, signInInBrowser, signInWithApple, type Providers } from "@/lib/socialAuth";
 import { C } from "@/lib/theme";
 import { Logo } from "@/components/Logo";
 import { Button, Field, Message, T } from "@/components/ui";
@@ -17,6 +19,27 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  // "Continue with…" buttons appear once each one is switched on in Supabase.
+  const [providers, setProviders] = useState<Providers>({ apple: false, google: false });
+  useEffect(() => {
+    enabledProviders().then(setProviders);
+  }, []);
+  // Apple's rules: on iPhone, offering Google means offering Apple too.
+  const showApple = providers.apple;
+  const showGoogle = providers.google && (Platform.OS !== "ios" || providers.apple);
+
+  async function social(run: () => Promise<void>) {
+    setError(null);
+    setInfo(null);
+    setBusy(true);
+    try {
+      await run();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That didn't work. Try again, or use your email.");
+    }
+    setBusy(false);
+  }
 
   function switchTo(m: Mode) {
     setMode(m);
@@ -76,6 +99,29 @@ export default function Login() {
           </View>
 
           <T v="h2" accessibilityRole="header" style={{ marginTop: 28 }}>{title}</T>
+
+          {showApple || showGoogle ? (
+            <View style={st.providers}>
+              {showApple &&
+                (Platform.OS === "ios" ? (
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={mode === "signup" ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP : AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                    cornerRadius={24}
+                    style={{ height: 48, width: "100%" }}
+                    onPress={() => social(signInWithApple)}
+                  />
+                ) : (
+                  <Button kind="white" label="Continue with Apple" onPress={() => social(() => signInInBrowser("apple"))} />
+                ))}
+              {showGoogle && <Button kind="white" label="Continue with Google" onPress={() => social(() => signInInBrowser("google"))} />}
+              <View style={st.or}>
+                <View style={st.orLine} />
+                <T v="small">or use your email</T>
+                <View style={st.orLine} />
+              </View>
+            </View>
+          ) : null}
           {mode === "signup" && (
             <Field label="Your name" value={name} onChangeText={setName} max={40} autoComplete="name" textContentType="name" hint="Shown next to your scores, notes and comments." />
           )}
@@ -101,6 +147,9 @@ export default function Login() {
           <View style={st.switches}>
             {mode !== "signin" && <Button kind="link" label="I already have an account" onPress={() => switchTo("signin")} />}
             {mode !== "signup" && <Button kind="link" label="Make an account" onPress={() => switchTo("signup")} />}
+            {mode === "signin" && (
+              <Button kind="link" label="Forgotten your password?" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/login?mode=reset`)} />
+            )}
           </View>
 
           <Button kind="link" style={{ marginTop: 28, alignSelf: "center" }} label="Privacy policy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/privacy`)} />
@@ -115,4 +164,7 @@ const st = StyleSheet.create({
   inner: { padding: 20, paddingBottom: 48, width: "100%", maxWidth: 480, alignSelf: "center" },
   brand: { gap: 12, marginTop: 24 },
   switches: { marginTop: 18, gap: 10, alignItems: "flex-start" },
+  providers: { gap: 10, marginTop: 16 },
+  or: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: C.line },
 });

@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { SessionProvider, useSession } from "@/lib/session";
+import { StreakProvider } from "@/lib/streak";
 import { C, FONT_FILES } from "@/lib/theme";
 import "@/lib/push";
 
@@ -20,10 +21,12 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(FONT_FILES);
   return (
     <SessionProvider>
-      <ThemeProvider value={theme}>
-        <StatusBar style="light" />
-        <Gate fontsReady={fontsLoaded || !!fontError} />
-      </ThemeProvider>
+      <StreakProvider>
+        <ThemeProvider value={theme}>
+          <StatusBar style="light" />
+          <Gate fontsReady={fontsLoaded || !!fontError} />
+        </ThemeProvider>
+      </StreakProvider>
     </SessionProvider>
   );
 }

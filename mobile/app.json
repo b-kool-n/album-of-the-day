@@ -14,7 +14,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.benkoolen.albumoftheday",
@@ -47,7 +48,9 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#FF4F12"
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": false,

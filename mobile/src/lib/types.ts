@@ -1,5 +1,21 @@
 // Copied from the website (lib/types.ts). Keep the two in step.
-export type Track = { number: number; name: string; duration_ms: number };
+export type Track = { number: number; name: string; duration_ms: number; url?: string };
+
+// The song's own Spotify link when we have it, otherwise a Spotify search for it.
+export function trackLink(album: Pick<Album, "artist">, track: Track): string {
+  if (track.url && track.url.startsWith("https://open.spotify.com/")) return track.url;
+  return "https://open.spotify.com/search/" + encodeURIComponent(`${album.artist} ${track.name}`);
+}
+
+export function isTopSong(album: Pick<Album, "top_song">, track: Track): boolean {
+  const clean = (x: string) => x.toLowerCase().replace(/\s*[-(].*(remaster|version|mono|stereo|edit|mix).*$/i, "").trim();
+  return !!album.top_song && clean(album.top_song) === clean(track.name);
+}
+
+export function trackLength(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
 
 export type Album = {
   id: string;

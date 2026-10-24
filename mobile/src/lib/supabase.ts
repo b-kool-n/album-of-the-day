@@ -12,6 +12,8 @@ export const supabase = createClient(process.env.EXPO_PUBLIC_SUPABASE_URL!, proc
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Needed for "Continue with Google": the browser hands back a one-time code the app swaps for a sign-in.
+    flowType: "pkce",
   },
 });
 

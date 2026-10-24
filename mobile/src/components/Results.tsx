@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { MEASURES, oneDecimal, type DayAverages, type Rating } from "@/lib/types";
 import { C, F } from "@/lib/theme";
@@ -5,7 +6,7 @@ import { Panel, T } from "./ui";
 
 export type DayNote = { user_id: string; note: string; overall: number; profiles: { display_name: string } | null };
 
-export function Results({ mine, avg, notes, isToday }: { mine: Rating; avg: DayAverages | null; notes: DayNote[]; isToday: boolean }) {
+export function Results({ mine, avg, notes, isToday, share }: { mine: Rating; avg: DayAverages | null; notes: DayNote[]; isToday: boolean; share?: ReactNode }) {
   const n = avg?.ratings ?? 1;
   return (
     <Panel
@@ -52,6 +53,8 @@ export function Results({ mine, avg, notes, isToday }: { mine: Rating; avg: DayA
         <View style={st.legendItem}><View style={[st.key, { backgroundColor: C.muted, opacity: 0.55 }]} /><T v="small">Average</T></View>
         <View style={st.legendItem}><View style={[st.key, { backgroundColor: C.orange }]} /><T v="small">You</T></View>
       </View>
+
+      {share}
 
       {notes.length > 0 && (
         <View style={{ marginTop: 18, gap: 10 }}>
