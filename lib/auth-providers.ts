@@ -12,7 +12,9 @@ export async function enabledProviders(): Promise<Providers> {
     });
     if (!res.ok) return { apple: false, google: false };
     const json = (await res.json()) as { external?: Record<string, boolean> };
-    return { apple: !!json.external?.apple, google: !!json.external?.google };
+    // Apple on the website needs extra Apple set-up (a Services ID and key) beyond what the iPhone
+    // app needs, so it stays hidden here until WEB_APPLE_SIGNIN=1 is set in Vercel.
+    return { apple: !!json.external?.apple && process.env.WEB_APPLE_SIGNIN === "1", google: !!json.external?.google };
   } catch {
     return { apple: false, google: false };
   }
