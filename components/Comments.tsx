@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatWhen } from "@/lib/dates";
-import { deleteComment, reportComment, toggleReaction } from "@/app/actions";
+import { blockPerson, deleteComment, reportComment, toggleReaction } from "@/app/actions";
 
 const EMOJI = ["🔥", "❤️", "😂", "👍"] as const;
 const EMOJI_NAMES: Record<string, string> = { "🔥": "Fire", "❤️": "Love", "😂": "Laughing", "👍": "Thumbs up" };
@@ -106,6 +106,17 @@ export async function Comments({ day, hasScored }: { day: string; hasScored: boo
                     </form>
                   </details>
                 ))}
+              {!mine && (
+                <details className="edit">
+                  <summary>Block</summary>
+                  <form action={blockPerson}>
+                    <input type="hidden" name="id" value={c.user_id} />
+                    <input type="hidden" name="day" value={day} />
+                    <p className="msg">You won&apos;t see {c.profiles?.display_name ? `${c.profiles.display_name}'s` : "their"} comments or notes any more. They won&apos;t be told. You can unblock them from Account.</p>
+                    <button className="btn ghost small" type="submit">Block {c.profiles?.display_name || "this person"}</button>
+                  </form>
+                </details>
+              )}
             </div>
           </li>
         );

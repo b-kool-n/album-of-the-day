@@ -62,6 +62,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               <button className="btn provider" type="submit">Continue with Google</button>
             </form>
           )}
+          <p className="msg small">By continuing you agree to the <Link href="/terms">terms of use</Link>.</p>
           <p className="or"><span>or use your email</span></p>
         </div>
       )}
@@ -74,6 +75,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <>New here? <Link href="/login?mode=signup">Make an account</Link></>
         )}
       </p>
+      <p className="switch-mode"><Link href="/support">Help</Link> · <Link href="/terms">Terms</Link> · <Link href="/privacy">Privacy</Link></p>
     </div>
   );
 }

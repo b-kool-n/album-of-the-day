@@ -62,6 +62,19 @@ function CommentRow({ c, userId, isAdmin, canReact, alreadyReported, reactions, 
   const [reason, setReason] = useState("");
   const [sent, setSent] = useState(alreadyReported);
 
+  function confirmBlock() {
+    const name = c.profiles?.display_name || "this person";
+    const run = async () => {
+      await supabase.from("user_blocks").insert({ blocker_id: userId, blocked_id: c.user_id });
+      onChange();
+    };
+    if (Platform.OS === "web") return void run();
+    Alert.alert(`Block ${name}?`, "You won't see their comments or notes any more. They won't be told. You can unblock them from Account.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Block", style: "destructive", onPress: run },
+    ]);
+  }
+
   function confirmDelete() {
     const run = async () => {
       await supabase.from("comments").delete().eq("id", c.id);
@@ -94,6 +107,7 @@ function CommentRow({ c, userId, isAdmin, canReact, alreadyReported, reactions, 
       <View style={st.actions}>
         {(mine || isAdmin) && <Button kind="link" label="Delete" onPress={confirmDelete} />}
         {!mine && (sent ? <T v="small">Reported. Thanks.</T> : !reporting && <Button kind="link" label="Report" onPress={() => setReporting(true)} />)}
+        {!mine && <Button kind="link" label="Block" onPress={confirmBlock} />}
       </View>
       {reporting && (
         <View>

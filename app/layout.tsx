@@ -4,6 +4,7 @@ import "./globals.css";
 import { Logo } from "@/components/Logo";
 import { Nav } from "@/components/Nav";
 import { Tour } from "@/components/Tour";
+import { TermsPrompt } from "@/components/TermsPrompt";
 import { getViewer } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="wrap">{children}</main>
-        {profile && !profile.tour_seen && <Tour />}
+        {profile && !profile.terms_accepted_at ? <TermsPrompt /> : profile && !profile.tour_seen && <Tour />}
       </body>
     </html>
   );

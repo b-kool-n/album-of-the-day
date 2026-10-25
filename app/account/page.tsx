@@ -5,6 +5,7 @@ import { Disc } from "@/components/Logo";
 import { signOut } from "../login/actions";
 import { DeleteAccountForm, FeedbackForm, NameForm } from "./forms";
 import { replayTour } from "./actions";
+import { unblockPerson } from "../actions";
 import { PushSettings } from "./PushSettings";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +23,14 @@ export default async function AccountPage() {
     );
   }
 
-  const [{ count: scored }, { count: suggested }, { data: devices }, { data: publicKey }] = await Promise.all([
+  const [{ count: scored }, { count: suggested }, { data: devices }, { data: publicKey }, { data: blockRows }] = await Promise.all([
     supabase.from("ratings").select("day", { count: "exact", head: true }).eq("user_id", userId),
     supabase.from("submissions").select("id", { count: "exact", head: true }).eq("user_id", userId),
     supabase.from("push_subscriptions").select("id").eq("user_id", userId),
     supabase.rpc("vapid_public_key"),
+    supabase.from("user_blocks").select("blocked_id, profiles!user_blocks_blocked_id_fkey(display_name)").order("created_at", { ascending: false }),
   ]);
+  const blocks = (blockRows ?? []) as unknown as { blocked_id: string; profiles: { display_name: string } | null }[];
 
   return (
     <>
@@ -60,11 +63,31 @@ export default async function AccountPage() {
         <FeedbackForm />
       </section>
 
+      {blocks.length > 0 && (
+        <section className="panel">
+          <h2>Blocked people</h2>
+          <div className="sub">You don&apos;t see their comments or notes. They aren&apos;t told.</div>
+          <ul className="blocked-list">
+            {blocks.map((b) => (
+              <li key={b.blocked_id}>
+                <span>{b.profiles?.display_name || "Someone"}</span>
+                <form action={unblockPerson}>
+                  <input type="hidden" name="id" value={b.blocked_id} />
+                  <button className="linkbtn" type="submit">Unblock</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="panel">
         <h2>Privacy and support</h2>
         <p className="msg">What we store, why, and how to get help.</p>
         <div className="inline">
-          <Link className="btn ghost small" href="/privacy">Read the privacy policy</Link>
+          <Link className="btn ghost small" href="/support">Help and support</Link>
+          <Link className="btn ghost small" href="/terms">Terms of use</Link>
+          <Link className="btn ghost small" href="/privacy">Privacy policy</Link>
           <form action={replayTour}><button className="btn ghost small" type="submit">Replay the tour</button></form>
         </div>
       </section>

@@ -1,6 +1,5 @@
 import type { ComponentRef, ReactNode, RefObject } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   Platform,
@@ -18,7 +17,8 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F } from "@/lib/theme";
-import { Logo, Disc } from "./Logo";
+import { Logo, Disc, Record } from "./Logo";
+import { Spin } from "./Spin";
 import { StreakPill } from "./StreakPill";
 
 // ===== Text =====
@@ -57,7 +57,7 @@ export function Screen({
     <SafeAreaView style={s.screen} edges={["top", "left", "right"]}>
       {brand && (
         <View style={s.brandBar}>
-          <Logo size={30} />
+          <Logo size={30} spinning={refreshing} />
           <T style={s.wordmark} accessibilityRole="header" numberOfLines={1}>Album of the Day</T>
           <StreakPill />
         </View>
@@ -79,10 +79,13 @@ export function Screen({
   );
 }
 
-export function Loading() {
+// A record turning, instead of the standard loading wheel.
+export function Loading({ label = "Loading" }: { label?: string }) {
   return (
-    <View style={s.center}>
-      <ActivityIndicator color={C.orange} />
+    <View style={s.center} accessible accessibilityRole="progressbar" accessibilityLabel={label}>
+      <Spin on>
+        <Record size={56} grooves={4} />
+      </Spin>
     </View>
   );
 }

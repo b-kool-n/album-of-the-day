@@ -33,11 +33,12 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   if (!name) return { error: "Add a name so friends know whose scores are whose." };
   if (!email) return { error: "Enter your email." };
   if (password.length < 8) return { error: "Use a password of at least 8 characters." };
+  if (formData.get("terms") !== "on") return { error: "Tick the box to agree to the terms of use." };
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: name }, emailRedirectTo: `${await siteOrigin()}/auth/callback` },
+    options: { data: { full_name: name, terms_accepted: true }, emailRedirectTo: `${await siteOrigin()}/auth/callback` },
   });
   if (error) {
     if (/registered|exists/i.test(error.message)) return { error: "There's already an account with that email. Sign in instead." };

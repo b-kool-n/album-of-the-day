@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useEffect, useRef, type ComponentRef } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
@@ -67,6 +67,8 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
   let avg: DayAverages | null = null;
   let notes: DayNote[] = [];
   if (mine) {
+    const { data: blockRows } = await supabase.from("user_blocks").select("blocked_id");
+    const blocked = new Set((blockRows ?? []).map((b) => b.blocked_id as string));
     // Everyone else's scores only become readable once you've given yours.
     const [{ data: avgRow }, { data: noteRows }] = await Promise.all([
       supabase.from("day_averages").select("*").eq("day", day).maybeSingle(),
@@ -80,7 +82,8 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
         .limit(20),
     ]);
     avg = avgRow as DayAverages | null;
-    notes = (noteRows ?? []) as unknown as DayNote[];
+    // Notes from people you've blocked are left out.
+    notes = ((noteRows ?? []) as unknown as DayNote[]).filter((n) => !blocked.has(n.user_id));
   }
 
   return {
@@ -102,6 +105,8 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const resultsY = useRef<number | null>(null);
   const jumpToResults = useRef(false);
+  // After Listen on Spotify, the record keeps turning until today's album is scored.
+  const [listening, setListening] = useState(() => listeningTo() === day);
   const userId = session!.user.id;
   const { data, error, refreshing, refresh, reload } = useLoad(() => loadDay(day, userId), `${day}:${userId}`);
   const today = ukToday();
@@ -157,7 +162,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
 
   return (
     <Screen brand={!showBack} tabs={!showBack} top={back} onRefresh={refresh} refreshing={refreshing} scrollRef={scrollRef}>
-      <Deck album={album} number={number} />
+      <Deck album={album} number={number} spinning={isToday && listening && !mine} />
 
       <T v="eyebrow">No. {number} · {formatDay(day)}{isToday ? " · Today" : ""}</T>
       <T v="h1" style={{ marginTop: 6 }} accessibilityRole="header">{album.title}</T>
@@ -174,7 +179,11 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
       <Pressable
         onPress={() => {
           Linking.openURL(spotifyLink(album));
-          if (isToday && !mine) setScoreReminder(album.title, day);
+          if (isToday && !mine) {
+            setScoreReminder(album.title, day);
+            rememberListening(day);
+            setListening(true);
+          }
         }}
         accessibilityRole="link"
         accessibilityHint="Opens the album in Spotify"
@@ -245,6 +254,22 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
       )}
     </Screen>
   );
+}
+
+const LISTENING_KEY = "listening_day";
+function listeningTo(): string | null {
+  try {
+    return localStorage.getItem(LISTENING_KEY);
+  } catch {
+    return null;
+  }
+}
+function rememberListening(day: string) {
+  try {
+    localStorage.setItem(LISTENING_KEY, day);
+  } catch {
+    // Only for the spinning record.
+  }
 }
 
 function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {

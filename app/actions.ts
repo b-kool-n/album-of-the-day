@@ -65,6 +65,24 @@ export async function toggleReaction(formData: FormData) {
   if (isIsoDate(day)) refreshDay(day);
 }
 
+// Stops you seeing someone's comments and notes. They aren't told.
+export async function blockPerson(formData: FormData) {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  const id = String(formData.get("id") ?? "");
+  const day = String(formData.get("day") ?? "");
+  if (id && id !== userId) await supabase.from("user_blocks").insert({ blocker_id: userId, blocked_id: id });
+  revalidatePath("/account");
+  if (isIsoDate(day)) refreshDay(day);
+}
+
+export async function unblockPerson(formData: FormData) {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  await supabase.from("user_blocks").delete().eq("blocker_id", userId).eq("blocked_id", String(formData.get("id") ?? ""));
+  revalidatePath("/", "layout");
+}
+
 export async function deleteComment(formData: FormData) {
   const { supabase, userId } = await getViewer();
   if (!userId) return;

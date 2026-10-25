@@ -4,6 +4,7 @@ import { AccessibilityInfo, Animated, Easing, Text, View, type LayoutChangeEvent
 import type { Album } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Disc } from "./Logo";
+import { Spin } from "./Spin";
 
 const SLEEVE_COLOURS = ["#2B3A55", "#5B2333", "#1F4D3F", "#3D3A35", "#6B4E16", "#283845", "#4A2C4F", "#1E3B32", "#3B2A20", "#204059"];
 
@@ -37,7 +38,8 @@ export function Sleeve({ album, size, number }: { album: SleeveAlbum; size: numb
 }
 
 // The sleeve with the record sliding out of it: the one big moment on the day page.
-export function Deck({ album, number }: { album: SleeveAlbum; number?: number }) {
+// `spinning`: keeps the record turning, e.g. while someone is listening and hasn't scored yet.
+export function Deck({ album, number, spinning = false }: { album: SleeveAlbum; number?: number; spinning?: boolean }) {
   const [width, setWidth] = useState(0);
   const [slide] = useState(() => new Animated.Value(0));
 
@@ -77,7 +79,9 @@ export function Deck({ album, number }: { album: SleeveAlbum; number?: number })
               ],
             }}
           >
-            <Disc size={disc} />
+            <Spin on={spinning}>
+              <Disc size={disc} />
+            </Spin>
           </Animated.View>
         </View>
       )}

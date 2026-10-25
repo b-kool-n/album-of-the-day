@@ -3,7 +3,7 @@ import * as Crypto from "expo-crypto";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
-import { supabase } from "./supabase";
+import { callWeb, supabase } from "./supabase";
 
 export type Providers = { apple: boolean; google: boolean };
 
@@ -49,6 +49,11 @@ export async function signInWithApple(): Promise<void> {
 
   const { data, error } = await supabase.auth.signInWithIdToken({ provider: "apple", token: credential.identityToken, nonce: raw });
   if (error || !data.user) throw new Error("Apple sign-in didn't work. Try again, or use your email.");
+
+  // Keeps the token needed to cancel the Apple link if this account is ever deleted.
+  if (credential.authorizationCode) {
+    callWeb("/api/app/apple-token", { method: "POST", body: { code: credential.authorizationCode } }).catch(() => {});
+  }
 
   // Apple only shares the person's name the very first time, so save it now.
   const name = [credential.fullName?.givenName, credential.fullName?.familyName].filter(Boolean).join(" ").trim().slice(0, 40);

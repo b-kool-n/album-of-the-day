@@ -9,6 +9,7 @@ import { SessionProvider, useSession } from "@/lib/session";
 import { StreakProvider } from "@/lib/streak";
 import { C, FONT_FILES } from "@/lib/theme";
 import "@/lib/push";
+import { OpeningSpin } from "@/components/OpeningSpin";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,6 +53,7 @@ function Gate({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="login" />
         </Stack.Protected>
       </Stack>
+      {Platform.OS !== "web" && <OpeningSpin />}
     </>
   );
 }

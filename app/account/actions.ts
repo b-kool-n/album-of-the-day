@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/supabase/server";
 import { createAdminClient, SECRET_KEY_MISSING, hasAdminKey } from "@/lib/supabase/admin";
 import { sendPush } from "@/lib/push";
+import { revokeAppleLink } from "@/lib/apple";
 
 export type FormState = { error?: string; done?: string; at?: number };
 
@@ -40,6 +41,7 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
   if (formData.get("confirm") !== "on") return { error: "Tick the box to confirm." };
   if (!hasAdminKey()) return { error: "Account deletion isn't switched on yet. Ask the curator, or try again later." };
   const admin = createAdminClient();
+  await revokeAppleLink(admin, userId);
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) return { error: "Couldn't delete your account. Try again." };
   await supabase.auth.signOut();
@@ -129,4 +131,13 @@ export async function setNewPassword(_prev: FormState, formData: FormData): Prom
     return { error: "Couldn't save it. Try again." };
   }
   return { done: "Saved. You can use your new password straight away, on the website and in the app." };
+}
+
+// ===== Terms of use =====
+
+export async function acceptTerms() {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return;
+  await supabase.rpc("accept_terms");
+  revalidatePath("/", "layout");
 }

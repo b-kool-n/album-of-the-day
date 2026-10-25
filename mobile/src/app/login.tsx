@@ -7,7 +7,7 @@ import { WEB_URL, supabase } from "@/lib/supabase";
 import { enabledProviders, signInInBrowser, signInWithApple, type Providers } from "@/lib/socialAuth";
 import { C } from "@/lib/theme";
 import { Logo } from "@/components/Logo";
-import { Button, Field, Message, T } from "@/components/ui";
+import { Button, Field, Message, T, Toggle } from "@/components/ui";
 
 type Mode = "signin" | "signup";
 
@@ -16,6 +16,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -68,12 +69,13 @@ export default function Login() {
     const n = name.trim().slice(0, 40);
     if (!n) return setError("Add a name so friends know whose scores are whose.");
     if (password.length < 8) return setError("Use a password of at least 8 characters.");
+    if (!agreed) return setError("Tick to agree to the terms of use first.");
     setBusy(true);
     const { data, error: err } = await supabase.auth.signUp({
       email: e,
       password,
       // The email link confirms the account, then opens a page on the website saying to come back to the app.
-      options: { data: { full_name: n }, emailRedirectTo: `${WEB_URL}/login?confirmed=1` },
+      options: { data: { full_name: n, terms_accepted: true }, emailRedirectTo: `${WEB_URL}/login?confirmed=1` },
     });
     setBusy(false);
     if (err) {
@@ -115,6 +117,10 @@ export default function Login() {
                   <Button kind="white" label="Continue with Apple" onPress={() => social(() => signInInBrowser("apple"))} />
                 ))}
               {showGoogle && <Button kind="white" label="Continue with Google" onPress={() => social(() => signInInBrowser("google"))} />}
+              <T v="small">
+                By continuing you agree to the{" "}
+                <T v="small" style={st.link} accessibilityRole="link" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/terms`)}>terms of use</T>.
+              </T>
               <View style={st.or}>
                 <View style={st.orLine} />
                 <T v="small">or use your email</T>
@@ -136,6 +142,12 @@ export default function Login() {
             hint={mode === "signup" ? "At least 8 characters." : undefined}
             onSubmitEditing={submit}
           />
+          {mode === "signup" && (
+            <View style={{ marginTop: 14 }}>
+              <Toggle label="I agree to the terms of use" detail="Be decent. No abuse, hate or spam." value={agreed} onChange={setAgreed} />
+              <Button kind="link" label="Read the terms" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/terms`)} />
+            </View>
+          )}
           <Button
             style={{ marginTop: 20 }}
             label={busy ? "One moment…" : mode === "signin" ? "Sign in" : "Make my account"}
@@ -152,7 +164,11 @@ export default function Login() {
             )}
           </View>
 
-          <Button kind="link" style={{ marginTop: 28, alignSelf: "center" }} label="Privacy policy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/privacy`)} />
+          <View style={st.footer}>
+            <Button kind="link" label="Help" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/support`)} />
+            <Button kind="link" label="Terms" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/terms`)} />
+            <Button kind="link" label="Privacy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/privacy`)} />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -166,5 +182,7 @@ const st = StyleSheet.create({
   switches: { marginTop: 18, gap: 10, alignItems: "flex-start" },
   providers: { gap: 10, marginTop: 16 },
   or: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },
+  link: { color: C.orange, textDecorationLine: "underline" },
+  footer: { flexDirection: "row", justifyContent: "center", gap: 22, marginTop: 28 },
   orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: C.line },
 });

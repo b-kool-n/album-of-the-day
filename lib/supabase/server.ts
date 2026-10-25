@@ -32,10 +32,10 @@ export async function getViewer() {
   if (!userId) return { supabase, userId: null, email: null, profile: null };
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, is_admin, is_blocked, created_at, tour_seen")
+    .select("id, display_name, is_admin, is_blocked, created_at, tour_seen, terms_accepted_at")
     .eq("id", userId)
     .maybeSingle();
   return { supabase, userId, email, profile: profile as Profile | null };
 }
 
-export type Profile = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string; tour_seen: boolean };
+export type Profile = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string; tour_seen: boolean; terms_accepted_at: string | null };

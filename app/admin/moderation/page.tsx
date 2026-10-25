@@ -20,7 +20,7 @@ type Reported = {
   comment_reports: { reason: string | null; reporter: { display_name: string } | null }[];
 };
 type Person = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string };
-type Feedback = { id: string; body: string; handled: boolean; created_at: string; profiles: { display_name: string } | null };
+type Feedback = { id: string; body: string; handled: boolean; created_at: string; contact_email: string | null; profiles: { display_name: string } | null };
 
 export default async function ModerationPage() {
   const { supabase, profile } = await getViewer();
@@ -38,7 +38,7 @@ export default async function ModerationPage() {
     supabase.from("banned_words").select("word").order("word"),
     supabase
       .from("feedback")
-      .select("id, body, handled, created_at, profiles!feedback_user_id_fkey(display_name)")
+      .select("id, body, handled, created_at, contact_email, profiles!feedback_user_id_fkey(display_name)")
       .order("handled", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(100),
@@ -93,12 +93,15 @@ export default async function ModerationPage() {
 
       <h2 className="section-title">Feedback {newFeedback > 0 && <span className="chip hot">{newFeedback} new</span>}</h2>
       {feedback.length === 0 ? (
-        <p className="msg">No feedback yet. People send it from their Account page.</p>
+        <p className="msg">No feedback yet. People send it from their Account page or the Help and support page.</p>
       ) : (
         <ul className="list">
           {feedback.map((f) => (
             <li className={`admin-item${f.handled ? " is-done" : ""}`} key={f.id}>
-              <div className="d">{f.profiles?.display_name || "Deleted account"} · {formatWhen(f.created_at)}</div>
+              <div className="d">
+                {f.profiles?.display_name || (f.contact_email ? "Support page" : "Deleted account")} · {formatWhen(f.created_at)}
+                {f.contact_email && <> · reply to <a href={`mailto:${f.contact_email}`}>{f.contact_email}</a></>}
+              </div>
               <p className="quote">{f.body}</p>
               <form action={setFeedbackHandled} className="inline">
                 <input type="hidden" name="id" value={f.id} />

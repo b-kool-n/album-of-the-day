@@ -2,7 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "./supabase";
 
-export type Profile = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string; tour_seen: boolean };
+export type Profile = { id: string; display_name: string; is_admin: boolean; is_blocked: boolean; created_at: string; tour_seen: boolean; terms_accepted_at: string | null };
 
 type SessionValue = {
   ready: boolean;
@@ -38,7 +38,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!userId) return null;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, is_admin, is_blocked, created_at, tour_seen")
+      .select("id, display_name, is_admin, is_blocked, created_at, tour_seen, terms_accepted_at")
       .eq("id", userId)
       .maybeSingle();
     return (data as Profile | null) ?? null;

@@ -72,10 +72,14 @@ export default function Account() {
         <FeedbackForm userId={userId} />
       </Panel>
 
+      <BlockedPeople />
+
       <Panel title="Privacy and support">
         <T v="muted" style={{ marginTop: 6 }}>What we store, why, and how to get help.</T>
         <View style={st.inline}>
-          <Button kind="ghost" small label="Read the privacy policy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/privacy`)} />
+          <Button kind="ghost" small label="Help and support" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/support`)} />
+          <Button kind="ghost" small label="Terms of use" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/terms`)} />
+          <Button kind="ghost" small label="Privacy policy" onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/privacy`)} />
           <Button kind="ghost" small label="Replay the tour" onPress={replayTour} />
         </View>
       </Panel>
@@ -95,6 +99,36 @@ export default function Account() {
         <DeleteAccount onDeleted={signOut} />
       </Panel>
     </Screen>
+  );
+}
+
+// People you've blocked: you don't see their comments or notes. Hidden when there's nobody.
+function BlockedPeople() {
+  const { data, reload } = useLoad(async () => {
+    const { data: rows } = await supabase
+      .from("user_blocks")
+      .select("blocked_id, profiles!user_blocks_blocked_id_fkey(display_name)")
+      .order("created_at", { ascending: false });
+    return (rows ?? []) as unknown as { blocked_id: string; profiles: { display_name: string } | null }[];
+  }, "blocks");
+  if (!data?.length) return null;
+
+  async function unblock(id: string) {
+    await supabase.from("user_blocks").delete().eq("blocked_id", id);
+    reload();
+  }
+
+  return (
+    <Panel title="Blocked people" sub="You don't see their comments or notes. They aren't told.">
+      <View style={{ marginTop: 8 }}>
+        {data.map((b) => (
+          <View key={b.blocked_id} style={st.fact}>
+            <T style={{ flex: 1 }}>{b.profiles?.display_name || "Someone"}</T>
+            <Button kind="link" label="Unblock" onPress={() => unblock(b.blocked_id)} />
+          </View>
+        ))}
+      </View>
+    </Panel>
   );
 }
 

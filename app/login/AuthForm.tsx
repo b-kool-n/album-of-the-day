@@ -25,6 +25,12 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         minLength={mode === "signup" ? 8 : undefined}
         required
       />
+      {mode === "signup" && (
+        <label className="agree">
+          <input type="checkbox" name="terms" required />
+          <span>I agree to the <a href="/terms" target="_blank">terms of use</a>: no abuse, hate or nasty stuff.</span>
+        </label>
+      )}
       <div className="submit-row">
         <span />
         <button className="btn orange" type="submit" disabled={pending}>
