@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.benkoolen.albumoftheday",
       "supportsTablet": false,
       "infoPlist": {
+        "CFBundleDisplayName": "AOTD",
         "ITSAppUsesNonExemptEncryption": false
       },
       "usesAppleSignIn": true
