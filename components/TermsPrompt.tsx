@@ -13,8 +13,9 @@ export function TermsPrompt() {
   const path = usePathname();
   if (READABLE.includes(path)) return null;
   return (
-    <div className="terms-prompt" role="dialog" aria-modal="true" aria-labelledby="terms-title">
-      <div className="card">
+    <div className="sheet-wrap">
+      <div className="sheet-dim" aria-hidden="true" />
+      <div className="sheet terms" role="dialog" aria-modal="true" aria-labelledby="terms-title">
         <div className="eyebrow">Before you carry on</div>
         <h2 id="terms-title">Our terms of use</h2>
         <p className="msg">Album of the Day is for talking about music. To use it, you agree to:</p>

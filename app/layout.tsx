@@ -6,6 +6,7 @@ import { Nav } from "@/components/Nav";
 import { Tour } from "@/components/Tour";
 import { TermsPrompt } from "@/components/TermsPrompt";
 import { getViewer } from "@/lib/supabase/server";
+import { WelcomeSheet } from "@/components/WelcomeSheet";
 
 export const metadata: Metadata = {
   title: "Album of the Day",
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="wrap">{children}</main>
+        {!profile && <WelcomeSheet />}
         {profile && !profile.terms_accepted_at ? <TermsPrompt /> : profile && !profile.tour_seen && <Tour />}
       </body>
     </html>

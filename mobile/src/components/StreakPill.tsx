@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useStreak } from "@/lib/streak";
+import { useSession } from "@/lib/session";
+import { goToSignIn } from "./Join";
 import { addDays, ukToday } from "@/lib/dates";
 import { C, F } from "@/lib/theme";
 import { Record } from "./Logo";
@@ -8,6 +10,19 @@ import { Button, T } from "./ui";
 
 // Small pill in the top bar: a record and the number of days in a row. Tap for the details.
 export function StreakPill() {
+  const { session } = useSession();
+  if (!session) {
+    // Signed out: the top bar offers sign-in instead.
+    return (
+      <Pressable onPress={goToSignIn} hitSlop={8} accessibilityRole="button" style={({ pressed }) => [st.pill, pressed && { opacity: 0.7 }]}>
+        <Text style={st.signIn} maxFontSizeMultiplier={1.3}>Sign in</Text>
+      </Pressable>
+    );
+  }
+  return <Streak />;
+}
+
+function Streak() {
   const { streak } = useStreak();
   const [open, setOpen] = useState(false);
   const live = streak.current > 0;
@@ -85,6 +100,7 @@ function StreakDetails() {
 }
 
 const st = StyleSheet.create({
+  signIn: { fontFamily: F.semibold, fontSize: 14, color: C.ink },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: C.line, marginLeft: "auto" },
   pillLive: { borderColor: C.orange, backgroundColor: C.soft },
   pillNum: { fontFamily: F.monoBold, fontSize: 14, color: C.muted },

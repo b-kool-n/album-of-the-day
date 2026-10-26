@@ -2,9 +2,9 @@ import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay, ukToday } from "@/lib/dates";
 import { Sleeve } from "@/components/Sleeve";
-import { Disc } from "@/components/Logo";
 import { SuggestForm } from "./SuggestForm";
 import { withdrawSuggestion } from "./actions";
+import { JoinPage } from "@/components/Join";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Suggest · Album of the Day" };
@@ -27,11 +27,7 @@ export default async function SuggestPage() {
   const { supabase, userId } = await getViewer();
   if (!userId) {
     return (
-      <div className="empty">
-        <Disc />
-        <h2>Suggest an album</h2>
-        <p><Link href="/login">Sign in</Link> or <Link href="/login?mode=signup">make an account</Link> to suggest albums for the back catalogue.</p>
-      </div>
+      <JoinPage title="Suggest an album" body="Make an account to suggest albums for a future Album of the Day." />
     );
   }
 

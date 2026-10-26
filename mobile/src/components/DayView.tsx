@@ -16,6 +16,7 @@ import { SpotifyMark } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
 import { Results, type DayNote } from "./Results";
 import { Comments, type Comment, type Reaction } from "./Comments";
+import { JoinPrompt } from "./Join";
 import { Button, Empty, Loading, Panel, Screen, T } from "./ui";
 
 type DayAlbum = Album & { profiles: { display_name: string } | null };
@@ -34,7 +35,7 @@ type DayData =
       reactions: Reaction[];
     };
 
-async function loadDay(day: string, userId: string): Promise<DayData> {
+async function loadDay(day: string, userId: string | null): Promise<DayData> {
   const today = ukToday();
   const { data: dayRow, error } = await supabase
     .from("album_days")
@@ -45,17 +46,21 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
   const album = (dayRow?.albums ?? null) as unknown as DayAlbum | null;
   if (!album || day > today) return { album: null };
 
+  // Signed out: just the album and how many have scored it. Scores and comments need an account.
+  const none = Promise.resolve({ data: null });
   const [{ count }, { data: countData }, { data: mineRow }, { data: commentRows }, { data: myReports }] = await Promise.all([
     supabase.from("album_days").select("day", { count: "exact", head: true }).lte("day", day),
     supabase.rpc("rating_count", { d: day }),
-    supabase.from("ratings").select("*").eq("user_id", userId).eq("day", day).maybeSingle(),
-    supabase
-      .from("comments")
-      .select("id, user_id, body, created_at, hidden, profiles!comments_user_id_fkey(display_name)")
-      .eq("day", day)
-      .order("created_at", { ascending: true })
-      .limit(300),
-    supabase.from("comment_reports").select("comment_id").eq("reporter_id", userId),
+    userId ? supabase.from("ratings").select("*").eq("user_id", userId).eq("day", day).maybeSingle() : none,
+    userId
+      ? supabase
+          .from("comments")
+          .select("id, user_id, body, created_at, hidden, profiles!comments_user_id_fkey(display_name)")
+          .eq("day", day)
+          .order("created_at", { ascending: true })
+          .limit(300)
+      : none,
+    userId ? supabase.from("comment_reports").select("comment_id").eq("reporter_id", userId) : none,
   ]);
   const mine = (mineRow ?? null) as Rating | null;
 
@@ -66,7 +71,7 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
 
   let avg: DayAverages | null = null;
   let notes: DayNote[] = [];
-  if (mine) {
+  if (mine && userId) {
     const { data: blockRows } = await supabase.from("user_blocks").select("blocked_id");
     const blocked = new Set((blockRows ?? []).map((b) => b.blocked_id as string));
     // Everyone else's scores only become readable once you've given yours.
@@ -94,7 +99,7 @@ async function loadDay(day: string, userId: string): Promise<DayData> {
     avg,
     notes,
     comments: commentList,
-    reported: (myReports ?? []).map((r) => r.comment_id as string),
+    reported: ((myReports ?? []) as { comment_id: string }[]).map((r) => r.comment_id),
     reactions: (reactionRows ?? []) as Reaction[],
   };
 }
@@ -107,8 +112,8 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
   const jumpToResults = useRef(false);
   // After Listen on Spotify, the record keeps turning until today's album is scored.
   const [listening, setListening] = useState(() => listeningTo() === day);
-  const userId = session!.user.id;
-  const { data, error, refreshing, refresh, reload } = useLoad(() => loadDay(day, userId), `${day}:${userId}`);
+  const userId = session?.user.id ?? null;
+  const { data, error, refreshing, refresh, reload } = useLoad(() => loadDay(day, userId), `${day}:${userId ?? "guest"}`);
   const today = ukToday();
   const isToday = day === today;
   const scoredToday = isToday && !!data?.album && !!data.mine;
@@ -180,7 +185,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         onPress={() => {
           Linking.openURL(spotifyLink(album));
           if (isToday && !mine) {
-            setScoreReminder(album.title, day);
+            if (userId) setScoreReminder(album.title, day);
             rememberListening(day);
             setListening(true);
           }
@@ -196,7 +201,9 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
 
       <Tracklist album={album} />
 
-      {mine && !editable ? (
+      {!userId ? (
+        <JoinPrompt title="Score it" body={`Make an account to score ${isToday ? "today's album" : "this album"} and see how everyone else rated it.`} />
+      ) : mine && !editable ? (
         <Panel title="Your scores" sub="Scores lock at midnight UK time on the day you give them.">
           <View style={st.locked}>
             {MEASURES.map((m) => (
@@ -235,6 +242,9 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         </Panel>
       )}
 
+      {!userId ? (
+        <JoinPrompt title="Comments" body="Make an account to read the comments and join in." />
+      ) : (
       <Comments
         day={day}
         userId={userId}
@@ -246,6 +256,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         reactions={data.reactions}
         onChange={reload}
       />
+      )}
 
       {!isToday && (
         <View style={{ marginTop: 24, alignItems: "flex-start" }}>

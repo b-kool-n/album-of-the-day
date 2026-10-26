@@ -25,14 +25,14 @@ export default function Archive() {
       // Only a convenience.
     }
   }
-  const userId = session!.user.id;
+  const userId = session?.user.id ?? null;
   const { data, error, refreshing, refresh } = useLoad(async () => {
     const today = ukToday();
     const [{ data: days, error: e }, { data: counts }, { data: avgs }, { data: mine }] = await Promise.all([
       supabase.from("album_days").select("day, albums(artist, title, release_year, cover_url)").lte("day", today).order("day", { ascending: false }),
       supabase.rpc("released_day_counts"),
-      supabase.from("day_averages").select("day, overall"),
-      supabase.from("ratings").select("day, overall").eq("user_id", userId),
+      userId ? supabase.from("day_averages").select("day, overall") : Promise.resolve({ data: [] }),
+      userId ? supabase.from("ratings").select("day, overall").eq("user_id", userId) : Promise.resolve({ data: [] }),
     ]);
     if (e) throw new Error("Couldn't load the archive. Pull down to try again.");
     return {
@@ -42,7 +42,7 @@ export default function Archive() {
       avgBy: new Map(((avgs ?? []) as Pick<DayAverages, "day" | "overall">[]).map((a) => [a.day, a.overall])),
       mineBy: new Map(((mine ?? []) as { day: string; overall: number }[]).map((r) => [r.day, r.overall])),
     };
-  }, userId);
+  }, userId ?? "guest");
 
   if (!data) {
     return <Screen onRefresh={refresh} refreshing={refreshing}>{error ? <Empty title="Couldn't load">{error}</Empty> : <Loading />}</Screen>;

@@ -1,4 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
+import { router, useLocalSearchParams } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
@@ -12,7 +13,8 @@ import { Button, Field, Message, T, Toggle } from "@/components/ui";
 type Mode = "signin" | "signup";
 
 export default function Login() {
-  const [mode, setMode] = useState<Mode>("signin");
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<Mode>(params.mode === "signin" ? "signin" : "signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -94,6 +96,7 @@ export default function Login() {
     <SafeAreaView style={st.screen}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={st.inner} keyboardShouldPersistTaps="handled">
+          <Button kind="link" label="Not now" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} style={{ alignSelf: "flex-start" }} />
           <View style={st.brand}>
             <Logo size={64} />
             <T v="title" style={{ fontSize: 30, lineHeight: 32 }}>Album of the Day</T>
@@ -178,7 +181,7 @@ export default function Login() {
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   inner: { padding: 20, paddingBottom: 48, width: "100%", maxWidth: 480, alignSelf: "center" },
-  brand: { gap: 12, marginTop: 24 },
+  brand: { gap: 12, marginTop: 16 },
   switches: { marginTop: 18, gap: 10, alignItems: "flex-start" },
   providers: { gap: 10, marginTop: 16 },
   or: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },

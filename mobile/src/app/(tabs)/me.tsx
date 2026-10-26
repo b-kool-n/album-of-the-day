@@ -10,10 +10,17 @@ import { C, F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
 import { CoverGrid } from "@/components/CoverGrid";
 import { Button, Chip, Empty, Loading, Screen, T } from "@/components/ui";
+import { JoinScreen } from "@/components/Join";
 
 type Row = Rating & { album_days: { albums: Pick<Album, "artist" | "title" | "cover_url" | "spotify_url"> } };
 
-export default function YourScores() {
+// Signed out: a prompt to make an account instead.
+export default function YourScoresTab() {
+  const { session } = useSession();
+  return session ? <YourScores /> : <JoinScreen title="Your scores" body="Make an account to keep every album you score, your day streak and a shelf of albums to relisten." />;
+}
+
+function YourScores() {
   const { session, profile } = useSession();
   const { streak } = useStreak();
   const userId = session!.user.id;

@@ -6,6 +6,7 @@ import { Sleeve } from "./Sleeve";
 import { Disc } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
 import { Comments } from "./Comments";
+import { JoinPanel } from "./Join";
 
 export async function DayView({ day }: { day: string }) {
   const { supabase, userId, profile } = await getViewer();
@@ -89,10 +90,7 @@ export async function DayView({ day }: { day: string }) {
       )}
 
       {!userId ? (
-        <div className="panel">
-          <h2>Score it</h2>
-          <p className="msg"><Link href="/login">Sign in</Link> or <Link href="/login?mode=signup">make an account</Link> to add your scores.</p>
-        </div>
+        <JoinPanel title="Score it" body={`Make an account to score ${isToday ? "today's album" : "this album"} and see how everyone else rated it.`} />
       ) : mine && !editable ? (
         <div className="panel">
           <h2>Your scores</h2>

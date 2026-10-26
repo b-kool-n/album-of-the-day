@@ -7,6 +7,7 @@ import { formatDay, ukToday } from "@/lib/dates";
 import { F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
 import { Banner, Button, Chip, Field, Loading, Message, Panel, Screen, T } from "@/components/ui";
+import { JoinScreen } from "@/components/Join";
 
 type Suggestion = {
   id: string;
@@ -22,7 +23,13 @@ type Suggestion = {
   albums: { album_days: { day: string }[] } | null;
 };
 
-export default function Suggest() {
+// Signed out: a prompt to make an account instead.
+export default function SuggestTab() {
+  const { session } = useSession();
+  return session ? <Suggest /> : <JoinScreen title="Suggest an album" body="Make an account to suggest albums for a future Album of the Day." />;
+}
+
+function Suggest() {
   const { session, profile } = useSession();
   const userId = session!.user.id;
   const [link, setLink] = useState("");

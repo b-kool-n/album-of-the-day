@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatWhen } from "@/lib/dates";
 import { blockPerson, deleteComment, reportComment, toggleReaction } from "@/app/actions";
@@ -6,6 +5,7 @@ import { blockPerson, deleteComment, reportComment, toggleReaction } from "@/app
 const EMOJI = ["🔥", "❤️", "😂", "👍"] as const;
 const EMOJI_NAMES: Record<string, string> = { "🔥": "Fire", "❤️": "Love", "😂": "Laughing", "👍": "Thumbs up" };
 import { CommentForm } from "./CommentForm";
+import { JoinPanel } from "./Join";
 
 type Comment = {
   id: string;
@@ -21,10 +21,7 @@ export async function Comments({ day, hasScored }: { day: string; hasScored: boo
 
   if (!userId) {
     return (
-      <div className="panel">
-        <h2>Comments</h2>
-        <p className="msg"><Link href="/login">Sign in</Link> to read the comments and join in.</p>
-      </div>
+      <JoinPanel title="Comments" body="Make an account to read the comments and join in." />
     );
   }
 

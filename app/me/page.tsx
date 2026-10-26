@@ -4,6 +4,7 @@ import { formatDay, ukToday } from "@/lib/dates";
 import { MEASURES, oneDecimal, type Album, type Rating } from "@/lib/types";
 import { Sleeve } from "@/components/Sleeve";
 import { Disc } from "@/components/Logo";
+import { JoinPage } from "@/components/Join";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your scores · Album of the Day" };
@@ -12,8 +13,7 @@ export default async function MePage() {
   const { supabase, userId, profile } = await getViewer();
   if (!userId) {
     return (
-      <div className="empty"><Disc /><h2>Your scores</h2>
-        <p><Link href="/login">Sign in</Link> to keep a history of every album you score.</p></div>
+      <JoinPage title="Your scores" body="Make an account to keep every album you score, your day streak and a shelf of albums to relisten." />
     );
   }
   const { data } = await supabase

@@ -9,10 +9,17 @@ import { formatDay } from "@/lib/dates";
 import { notificationsOn, turnOffNotifications, turnOnNotifications } from "@/lib/push";
 import { C, F } from "@/lib/theme";
 import { Banner, Button, Field, Message, Panel, Screen, T, Toggle } from "@/components/ui";
+import { JoinScreen } from "@/components/Join";
 
 const BANNED = "That includes a word that isn't allowed here. Please reword it.";
 
-export default function Account() {
+// Signed out: a prompt to make an account instead.
+export default function AccountTab() {
+  const { session } = useSession();
+  return session ? <Account /> : <JoinScreen title="Account" body="Make an account to choose your name, turn on the morning notification and keep your scores." />;
+}
+
+function Account() {
   const { session, profile, refreshProfile } = useSession();
   const userId = session!.user.id;
   const email = session!.user.email ?? "–";

@@ -45,10 +45,9 @@ function Gate({ fontsReady }: { fontsReady: boolean }) {
     <>
       {Platform.OS !== "web" && session && <NotificationTaps />}
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
-        <Stack.Protected guard={!!session}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="day/[date]" />
-        </Stack.Protected>
+        {/* Anyone can look around. Signing in closes the sign-in screen by itself. */}
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="day/[date]" />
         <Stack.Protected guard={!session}>
           <Stack.Screen name="login" />
         </Stack.Protected>

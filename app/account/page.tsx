@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay } from "@/lib/dates";
-import { Disc } from "@/components/Logo";
 import { signOut } from "../login/actions";
 import { DeleteAccountForm, FeedbackForm, NameForm } from "./forms";
 import { replayTour } from "./actions";
 import { unblockPerson } from "../actions";
 import { PushSettings } from "./PushSettings";
+import { JoinPage } from "@/components/Join";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Account · Album of the Day" };
@@ -15,11 +15,7 @@ export default async function AccountPage() {
   const { supabase, userId, email, profile } = await getViewer();
   if (!userId || !profile) {
     return (
-      <div className="empty">
-        <Disc />
-        <h2>Account</h2>
-        <p><Link href="/login">Sign in</Link> or <Link href="/login?mode=signup">make an account</Link>.</p>
-      </div>
+      <JoinPage title="Account" body="Make an account to choose your name, turn on the morning notification and keep your scores." />
     );
   }
 
