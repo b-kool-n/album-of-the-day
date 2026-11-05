@@ -1,8 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
+import { formatDay } from "@/lib/dates";
 import {
   approveSubmission,
+  bulkAdd,
+  type BulkState,
   rejectSubmission,
   removeDay,
   removeFromCatalogue,
@@ -127,5 +130,45 @@ export function CatalogueActions({ albumId, suggestedDay }: { albumId: string; s
         </form>
       </details>
     </div>
+  );
+}
+
+export function BulkAddForm({ suggestedDay }: { suggestedDay: string }) {
+  const [state, action, pending] = useActionState<BulkState, FormData>(bulkAdd, {});
+  return (
+    <form className="panel" action={action}>
+      <h2>Add lots at once</h2>
+      <div className="sub">
+        One album a line, as <b>Artist - Album</b> or a Spotify link. Each one is found on Spotify and put on the next empty
+        day, in order, from the start date. Suggestions waiting for review are approved if they&apos;re in the list.
+      </div>
+      <div className="form-grid">
+        <div>
+          <label className="field-label" htmlFor="bulk-start">Start date</label>
+          <input className="input" id="bulk-start" name="start" type="date" defaultValue={suggestedDay} required />
+        </div>
+        <div className="full">
+          <label className="field-label" htmlFor="bulk-list">Albums</label>
+          <textarea id="bulk-list" name="list" rows={10} required placeholder={"Radiohead - OK Computer\nKate Bush - Hounds of Love"} />
+        </div>
+      </div>
+      <div className="submit-row">
+        <span />
+        <button className="btn orange" type="submit" disabled={pending}>{pending ? "Looking them up… (up to a minute)" : "Add and schedule"}</button>
+      </div>
+      <Status state={state} />
+      {state.results && (
+        <ol className="bulk-results">
+          {state.results.map((r, i) => (
+            <li key={i} className={r.error ? "err" : undefined}>
+              {r.day ? <b>{formatDay(r.day)}</b> : <b>Not added</b>} {r.album ?? r.line}
+              {r.note && <span className="chip">{r.note}</span>}
+              {r.error && <span className="msg err"> {r.error}</span>}
+              {r.album && r.album !== r.line && <span className="msg"> (you wrote: {r.line})</span>}
+            </li>
+          ))}
+        </ol>
+      )}
+    </form>
   );
 }

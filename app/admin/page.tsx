@@ -3,7 +3,7 @@ import { getViewer } from "@/lib/supabase/server";
 import { addDays, formatDay, ukToday } from "@/lib/dates";
 import type { Album } from "@/lib/types";
 import { Sleeve } from "@/components/Sleeve";
-import { CatalogueActions, EditDay, ReviewSubmission, ScheduleForm } from "./forms";
+import { BulkAddForm, CatalogueActions, EditDay, ReviewSubmission, ScheduleForm } from "./forms";
 import { AdminNav } from "./AdminNav";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +80,7 @@ export default async function AdminPage() {
       )}
 
       <ScheduleForm suggestedDay={nextFree} />
+      <BulkAddForm suggestedDay={nextFree} />
 
       <h2 className="section-title">Back catalogue {catalogue.length > 0 && <span className="chip">{catalogue.length}</span>}</h2>
       {catalogue.length === 0 ? (

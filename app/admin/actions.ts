@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getViewer } from "@/lib/supabase/server";
-import { formatDay, isIsoDate, ukToday } from "@/lib/dates";
-import { fetchSpotifyAlbum, parseSpotifyAlbumId } from "@/lib/spotify";
+import { addDays, formatDay, isIsoDate, ukToday } from "@/lib/dates";
+import { fetchSpotifyAlbum, parseSpotifyAlbumId, searchSpotifyAlbum } from "@/lib/spotify";
 import { suggestTopSong } from "@/lib/lastfm";
 
 export type AdminState = { error?: string; done?: string };
@@ -201,6 +201,113 @@ export async function removeFromCatalogue(_prev: AdminState, formData: FormData)
     if (error) return { error: "Couldn't remove it." };
     refreshAll();
     return { done: "Removed from the back catalogue." };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+// ===== Bulk add =====
+
+export type BulkLine = { line: string; day?: string; album?: string; note?: string; error?: string };
+export type BulkState = { error?: string; done?: string; results?: BulkLine[] };
+
+// Runs jobs a few at a time so Spotify doesn't start refusing.
+async function inBatches<T, R>(items: T[], size: number, job: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += size) out.push(...(await Promise.all(items.slice(i, i + size).map(job))));
+  return out;
+}
+
+// Paste a list (one album a line, as "Artist - Album" or a Spotify link). Each is found on Spotify
+// and put on the next empty day, in order, from the start date. Matching suggestions are approved.
+export async function bulkAdd(_prev: BulkState, formData: FormData): Promise<BulkState> {
+  try {
+    const supabase = await requireAdmin();
+    const start = String(formData.get("start") ?? "").trim();
+    if (!isIsoDate(start) || start < ukToday()) return { error: "Pick a start date from today onwards." };
+    const lines = String(formData.get("list") ?? "")
+      .split("\n")
+      .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
+      .filter(Boolean);
+    if (!lines.length) return { error: "Paste at least one album." };
+    if (lines.length > 60) return { error: "Add up to 60 at a time." };
+
+    // 1. Find each one on Spotify.
+    const found = await inBatches(lines, 4, async (line) => {
+      try {
+        const fromLink = parseSpotifyAlbumId(line);
+        if (fromLink) return { line, id: fromLink };
+        const m = line.replace(/\s*\((?:19|20)\d\d\)\s*$/, "").match(/^(.+?)\s+[–—-]\s+(.+)$/);
+        if (!m) return { line, error: "Write it as Artist - Album, or paste a Spotify link." };
+        const id = await searchSpotifyAlbum(m[1].trim(), m[2].trim());
+        return id ? { line, id } : { line, error: "Not found on Spotify. Add it with a link instead." };
+      } catch (e) {
+        return { line, error: e instanceof Error ? e.message : "Spotify lookup failed." };
+      }
+    });
+
+    // 2. Skip anything already played or scheduled.
+    const ids = found.flatMap((f) => ("id" in f && f.id ? [f.id] : []));
+    const [{ data: known }, { data: subs }, { data: takenDays }] = await Promise.all([
+      supabase.from("albums").select("id, spotify_id, album_days(day)").in("spotify_id", ids),
+      supabase.from("submissions").select("id, user_id, spotify_id").eq("status", "pending").in("spotify_id", ids),
+      supabase.from("album_days").select("day").gte("day", start),
+    ]);
+    const scheduledOn = new Map<string, string>();
+    for (const a of (known ?? []) as { spotify_id: string; album_days: { day: string }[] }[]) {
+      const d = a.album_days?.map((x) => x.day).sort()[0];
+      if (d) scheduledOn.set(a.spotify_id, d);
+    }
+    const taken = new Set((takenDays ?? []).map((d) => d.day as string));
+    const seen = new Set<string>();
+
+    // 3. Save each one from Spotify, then put it on the next empty day.
+    const results: BulkLine[] = [];
+    let day = start;
+    const toSave = found.map((f) => {
+      if (!("id" in f) || !f.id) return { ...f, skip: true };
+      if (scheduledOn.has(f.id)) return { line: f.line, error: `Already on ${formatDay(scheduledOn.get(f.id)!)}.`, skip: true };
+      if (seen.has(f.id)) return { line: f.line, error: "Listed twice.", skip: true };
+      seen.add(f.id);
+      return { ...f, skip: false };
+    });
+    const saved = await inBatches(toSave, 3, async (f) => {
+      if (f.skip || !("id" in f) || !f.id) return { ...f };
+      try {
+        const sub = (subs ?? []).find((x) => x.spotify_id === f.id);
+        const album = await upsertFromSpotify(supabase, f.id, "", (sub?.user_id as string | undefined) ?? undefined);
+        if (sub) await supabase.from("submissions").update({ status: "approved", album_id: album.id }).eq("id", sub.id);
+        const { data: full } = await supabase.from("albums").select("artist, title, release_year").eq("id", album.id).single();
+        return { ...f, albumId: album.id, name: full ? `${full.artist} – ${full.title}${full.release_year ? ` (${full.release_year})` : ""}` : album.title, approved: !!sub };
+      } catch (e) {
+        return { ...f, error: e instanceof Error ? e.message : "Couldn't save it." };
+      }
+    });
+    for (const f of saved) {
+      const r = f as typeof f & { albumId?: string; name?: string; approved?: boolean; error?: string };
+      if (!r.albumId) {
+        results.push({ line: r.line, error: r.error ?? "Skipped." });
+        continue;
+      }
+      while (taken.has(day)) day = addDays(day, 1);
+      const { error } = await supabase.from("album_days").insert({ day, album_id: r.albumId });
+      if (error) {
+        results.push({ line: r.line, album: r.name, error: "Saved to the back catalogue, but couldn't schedule it." });
+        continue;
+      }
+      taken.add(day);
+      results.push({ line: r.line, day, album: r.name, note: r.approved ? "Suggestion approved" : undefined });
+      day = addDays(day, 1);
+    }
+
+    refreshAll();
+    const ok = results.filter((r) => r.day).length;
+    const last = results.filter((r) => r.day).at(-1)?.day;
+    return {
+      done: ok ? `${ok} of ${lines.length} scheduled${last ? `, up to ${formatDay(last)}` : ""}. Check the matches below.` : undefined,
+      error: ok ? undefined : "Nothing was scheduled. See below.",
+      results,
+    };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Something went wrong." };
   }

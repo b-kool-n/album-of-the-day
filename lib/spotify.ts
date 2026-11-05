@@ -71,3 +71,60 @@ export async function fetchSpotifyAlbum(albumId: string): Promise<SpotifyAlbum> 
     tracks: (a.tracks?.items ?? []).map((t, i) => ({ number: i + 1, name: t.name, duration_ms: t.duration_ms, url: t.external_urls?.spotify ?? `https://open.spotify.com/track/${t.id}` })),
   };
 }
+
+// Makes names comparable: lower case, no accents, punctuation or edition notes like "(Remastered)".
+function plain(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s*[([][^()[\]]*(remaster|deluxe|edition|expanded|anniversary|version|bonus)[^()[\]]*[)\]]/g, "")
+    .replace(/\s+-\s+.*(remaster|deluxe|edition|expanded|anniversary|version).*$/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// Finds an album by artist and title. Returns its Spotify ID, or null if nothing fits well enough.
+export async function searchSpotifyAlbum(artist: string, title: string): Promise<string | null> {
+  const token = await getToken();
+  type Hit = { id: string; name: string; album_type: string; artists: { name: string }[] };
+  async function search(q: string): Promise<Hit[]> {
+    const url = `https://api.spotify.com/v1/search?type=album&market=GB&limit=10&q=${encodeURIComponent(q)}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (res.status === 429 && attempt === 0) {
+        await new Promise((r) => setTimeout(r, (Number(res.headers.get("retry-after")) || 2) * 1000));
+        continue;
+      }
+      if (!res.ok) return [];
+      const json = (await res.json()) as { albums?: { items?: (Hit | null)[] } };
+      return (json.albums?.items ?? []).filter((x): x is Hit => !!x);
+    }
+    return [];
+  }
+
+  const wantTitle = plain(title);
+  const wantArtist = plain(artist);
+  const score = (h: Hit) => {
+    const t = plain(h.name);
+    const a = plain(h.artists.map((x) => x.name).join(" "));
+    let s = 0;
+    if (t === wantTitle) s += 4;
+    else if (t.startsWith(wantTitle) || wantTitle.startsWith(t)) s += 2;
+    else return -1;
+    if (a.includes(wantArtist) || wantArtist.includes(plain(h.artists[0]?.name ?? ""))) s += 4;
+    else return -1;
+    if (h.album_type === "album") s += 1;
+    if (/\blive\b|karaoke|tribute|instrumental/.test(h.name.toLowerCase())) s -= 3;
+    return s;
+  };
+
+  for (const q of [`album:${title} artist:${artist}`, `${artist} ${title}`]) {
+    const hits = await search(q);
+    // Spotify's own order breaks ties, so the best-known release wins.
+    const best = hits.map((h, i) => ({ h, s: score(h), i })).filter((x) => x.s >= 0).sort((x, y) => y.s - x.s || x.i - y.i)[0];
+    if (best) return best.h.id;
+  }
+  return null;
+}

@@ -324,3 +324,6 @@ details.danger > summary { color: var(--warn); }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
 .join-row { display: flex; align-items: center; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
 .join-col { display: grid; gap: 12px; justify-items: center; margin-top: 18px; }
+
+.bulk-results { margin: 14px 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; }
+.bulk-results .chip { margin-left: 6px; }
