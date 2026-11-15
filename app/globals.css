@@ -327,3 +327,7 @@ details.danger > summary { color: var(--warn); }
 
 .bulk-results { margin: 14px 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; }
 .bulk-results .chip { margin-left: 6px; }
+select.input { min-height: 42px; color: inherit; }
+.sort-row { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
+.sort-row a { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; text-decoration: none; color: inherit; }
+.sort-row a[aria-current="page"] { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 700; }

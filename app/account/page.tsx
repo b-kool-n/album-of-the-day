@@ -2,9 +2,10 @@ import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay } from "@/lib/dates";
 import { signOut } from "../login/actions";
-import { DeleteAccountForm, FeedbackForm, NameForm } from "./forms";
+import { DeleteAccountForm, FeedbackForm, NameForm, ReminderTimeForm } from "./forms";
 import { replayTour } from "./actions";
 import { unblockPerson } from "../actions";
+import { shortTime } from "@/lib/reminder-times";
 import { PushSettings } from "./PushSettings";
 import { JoinPage } from "@/components/Join";
 
@@ -49,8 +50,9 @@ export default async function AccountPage() {
 
       <section className="panel">
         <h2>Daily notification</h2>
-        <div className="sub">A nudge each morning when the new album is out. Set it up on each phone or computer you use.</div>
+        <div className="sub">A nudge when the new album is out, at the time you choose. Set it up on each phone or computer you use.</div>
         <PushSettings publicKey={(publicKey as string | null) ?? null} deviceCount={devices?.length ?? 0} />
+        <ReminderTimeForm time={shortTime(profile.reminder_time)} />
       </section>
 
       <section className="panel">

@@ -10,6 +10,7 @@ import { notificationsOn, turnOffNotifications, turnOnNotifications } from "@/li
 import { C, F } from "@/lib/theme";
 import { Banner, Button, Field, Message, Panel, Screen, T, Toggle } from "@/components/ui";
 import { JoinScreen } from "@/components/Join";
+import { ReminderTime } from "@/components/ReminderTime";
 
 const BANNED = "That includes a word that isn't allowed here. Please reword it.";
 
@@ -71,7 +72,7 @@ function Account() {
         <NameForm userId={userId} name={profile.display_name} onSaved={refreshProfile} />
       </Panel>
 
-      <Panel title="Daily notification" sub="A nudge each morning when the new album is out. Set it up on each phone you use.">
+      <Panel title="Daily notification" sub="A nudge when the new album is out, at the time you choose. Set it up on each phone you use.">
         {data ? <PushSettings initiallyOn={data.pushOn} /> : null}
       </Panel>
 
@@ -221,7 +222,8 @@ function PushSettings({ initiallyOn }: { initiallyOn: boolean }) {
 
   return (
     <View>
-      <Toggle label="Morning notification" detail="Around 8am UK time, when the new album is out." value={on} onChange={change} disabled={busy} />
+      <Toggle label="Morning notification" detail="Today's album, at the time below." value={on} onChange={change} disabled={busy} />
+      {on && <ReminderTime />}
       {on && (
         <View style={st.inline}>
           <Button kind="ghost" small label="Send a test" onPress={test} busy={busy} />

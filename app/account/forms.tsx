@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { deleteAccount, sendFeedback, updateName, type FormState } from "./actions";
+import { deleteAccount, sendFeedback, setReminderTime, updateName, type FormState } from "./actions";
+import { REMINDER_TIMES } from "@/lib/reminder-times";
 
 function Status({ state }: { state: FormState }) {
   if (state.error) return <p className="msg err" role="alert">{state.error}</p>;
@@ -16,6 +17,22 @@ export function NameForm({ name }: { name: string }) {
       <label className="field-label" htmlFor="acc-name">Name <span className="msg">(shown on your comments and notes)</span></label>
       <div className="review-row">
         <input className="input" id="acc-name" name="name" defaultValue={name} maxLength={40} autoComplete="nickname" required />
+        <button className="btn small" type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</button>
+      </div>
+      <Status state={state} />
+    </form>
+  );
+}
+
+export function ReminderTimeForm({ time }: { time: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(setReminderTime, {});
+  return (
+    <form action={action} className="inline-form" style={{ marginTop: 16 }}>
+      <label className="field-label" htmlFor="acc-time">Time <span className="msg">(UK time, for all your devices)</span></label>
+      <div className="review-row">
+        <select className="input" id="acc-time" name="time" defaultValue={time}>
+          {REMINDER_TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
         <button className="btn small" type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</button>
       </div>
       <Status state={state} />

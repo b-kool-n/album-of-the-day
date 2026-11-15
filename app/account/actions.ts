@@ -7,6 +7,7 @@ import { getViewer } from "@/lib/supabase/server";
 import { createAdminClient, SECRET_KEY_MISSING, hasAdminKey } from "@/lib/supabase/admin";
 import { sendPush } from "@/lib/push";
 import { revokeAppleLink } from "@/lib/apple";
+import { REMINDER_TIMES } from "@/lib/reminder-times";
 
 export type FormState = { error?: string; done?: string; at?: number };
 
@@ -21,6 +22,17 @@ export async function updateName(_prev: FormState, formData: FormData): Promise<
   if (error) return { error: error.message.includes("banned_words") ? BANNED : "Couldn't save your name. Try again." };
   revalidatePath("/", "layout");
   return { done: "Saved. Your comments and notes now show this name." };
+}
+
+export async function setReminderTime(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { supabase, userId } = await getViewer();
+  if (!userId) return { error: "Sign in first." };
+  const time = String(formData.get("time") ?? "");
+  if (!REMINDER_TIMES.includes(time)) return { error: "Pick a time between 05:00 and 22:00." };
+  const { error } = await supabase.from("profiles").update({ reminder_time: time }).eq("id", userId);
+  if (error) return { error: "Couldn't save the time. Try again." };
+  revalidatePath("/account");
+  return { done: `Saved. Your notification comes at ${time} each day, UK time.`, at: Date.now() };
 }
 
 export async function sendFeedback(_prev: FormState, formData: FormData): Promise<FormState> {
