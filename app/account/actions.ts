@@ -42,7 +42,7 @@ export async function sendFeedback(_prev: FormState, formData: FormData): Promis
   if (!body) return { error: "Write something first." };
   if (body.length > 2000) return { error: "Keep it under 2,000 characters." };
   const { error } = await supabase.from("feedback").insert({ user_id: userId, body });
-  if (error) return { error: "Couldn't send it. Try again." };
+  if (error) return { error: error.message.includes("too_many_messages") ? "You've sent a few messages in the last hour. Try again later." : "Couldn't send it. Try again." };
   revalidatePath("/", "layout");
   return { done: "Thanks. Your feedback has gone to the curator.", at: Date.now() };
 }

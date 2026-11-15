@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <li><b>Your account:</b> your email address, the name you choose, and a password (stored scrambled, so nobody can read it), plus when you agreed to the <Link href="/terms">terms of use</Link>.</li>
         <li><b>If you sign in with Apple or Google:</b> the email address and name they share with us. For Apple, we also keep a sign-in token, only so we can cancel your link with Apple if you delete your account.</li>
         <li><b>What you add:</b> your scores and notes, comments and reactions, albums you suggest, reports you make about comments, people you block, and feedback you send.</li>
-        <li><b>Support messages:</b> if you use the <Link href="/support">support page</Link>, your message and the email address you give, so we can reply.</li>
+        <li><b>Support messages:</b> if you use the <Link href="/support">support page</Link>, your message and the email address you give, so we can reply. To stop spam, we also keep a scrambled form of your internet address for a day. It can&apos;t be turned back into the address.</li>
         <li><b>Notifications:</b> if you turn on the daily notification, a delivery address for each device, supplied by your phone or browser.</li>
       </ul>
       <p>We don&apos;t connect to your Spotify account and don&apos;t know what you listen to. The Listen button just opens Spotify.</p>

@@ -248,7 +248,7 @@ function FeedbackForm({ userId }: { userId: string }) {
     setBusy(true);
     const { error: e } = await supabase.from("feedback").insert({ user_id: userId, body: text });
     setBusy(false);
-    if (e) return setError("Couldn't send it. Try again.");
+    if (e) return setError(e.message.includes("too_many_messages") ? "You've sent a few messages in the last hour. Try again later." : "Couldn't send it. Try again.");
     setBody("");
     setDone("Thanks. Your feedback has gone to the curator.");
   }
