@@ -5,7 +5,7 @@ import { Modal, Platform, ScrollView, StyleSheet, Text, View } from "react-nativ
 import { captureRef } from "react-native-view-shot";
 import { useStreak } from "@/lib/streak";
 import { formatDay } from "@/lib/dates";
-import { MEASURES, oneDecimal, type Album, type DayAverages, type Rating } from "@/lib/types";
+import { shortTitle, MEASURES, oneDecimal, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Disc, Logo } from "./Logo";
 import { Sleeve } from "./Sleeve";
@@ -90,7 +90,7 @@ function Card({ album, number, day, mine, avg }: Props) {
         </View>
       </View>
 
-      <Text style={st.title} numberOfLines={2}>{album.title}</Text>
+      <Text style={st.title} numberOfLines={2}>{shortTitle(album.title)}</Text>
       <Text style={st.artist} numberOfLines={1}>{album.artist}</Text>
 
       <View style={{ marginTop: 12, gap: 7 }}>

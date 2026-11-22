@@ -5,6 +5,7 @@ import type { Album } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Disc } from "./Logo";
 import { Spin } from "./Spin";
+import { shortTitle } from "@/lib/types";
 
 const SLEEVE_COLOURS = ["#2B3A55", "#5B2333", "#1F4D3F", "#3D3A35", "#6B4E16", "#283845", "#4A2C4F", "#1E3B32", "#3B2A20", "#204059"];
 
@@ -31,7 +32,7 @@ export function Sleeve({ album, size, number }: { album: SleeveAlbum; size: numb
         <Text style={{ fontFamily: F.display, fontSize: Math.max(9, size * 0.08), lineHeight: Math.max(9, size * 0.08) * 0.95, color: "#fff", textTransform: "uppercase" }} numberOfLines={small ? 3 : 4}>
           {album.artist}
         </Text>
-        {!small && <Text style={{ fontFamily: F.regular, fontSize: size * 0.046, color: "rgba(255,255,255,0.85)", marginTop: 4 }} numberOfLines={3}>{album.title}</Text>}
+        {!small && <Text style={{ fontFamily: F.regular, fontSize: size * 0.046, color: "rgba(255,255,255,0.85)", marginTop: 4 }} numberOfLines={3}>{shortTitle(album.title)}</Text>}
       </View>
     </View>
   );

@@ -5,6 +5,7 @@ import { Sleeve } from "@/components/Sleeve";
 import { SuggestForm } from "./SuggestForm";
 import { withdrawSuggestion } from "./actions";
 import { JoinPage } from "@/components/Join";
+import { shortTitle } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Suggest · Album of the Day" };
@@ -54,7 +55,7 @@ export default async function SuggestPage() {
                 <div className="thumb"><Sleeve album={s} /></div>
                 <div className="main">
                   <div className="d">Suggested {formatDay(s.created_at.slice(0, 10))}</div>
-                  <div className="t">{s.title}</div>
+                  <div className="t" title={s.title}>{shortTitle(s.title)}</div>
                   <div className="a">{s.artist}{s.release_year ? ` · ${s.release_year}` : ""}</div>
                   {s.reason && <div className="note-line">&ldquo;{s.reason}&rdquo;</div>}
                   {s.status === "rejected" && s.review_note && <div className="note-line msg">Curator: {s.review_note}</div>}

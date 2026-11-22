@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
 import { useLoad } from "@/lib/useLoad";
 import { formatDay } from "@/lib/dates";
-import { MEASURES, oneDecimal, spotifyLink, type Album, type MeasureKey, type Rating } from "@/lib/types";
+import { shortTitle, MEASURES, oneDecimal, spotifyLink, type Album, type MeasureKey, type Rating } from "@/lib/types";
 import { useStreak } from "@/lib/streak";
 import { C, F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
@@ -90,7 +90,7 @@ function YourScores() {
                 album: a,
                 badge: oneDecimal(r.relisten),
                 hot: true,
-                caption: a.title,
+                caption: shortTitle(a.title),
                 label: `${a.title} by ${a.artist}, relisten score ${oneDecimal(r.relisten)}. Opens in Spotify.`,
                 onPress: () => Linking.openURL(spotifyLink(a)),
               };
@@ -122,7 +122,7 @@ function YourScores() {
                 </>
               }
             >
-              <T style={{ fontFamily: F.bold }} numberOfLines={2}>{a.title}</T>
+              <T style={{ fontFamily: F.bold }} numberOfLines={2}>{shortTitle(a.title)}</T>
               <T v="muted" numberOfLines={1}>{a.artist}</T>
               <T style={st.mini}>{MEASURES.map((m) => `${m.short.slice(0, 1)} ${m.key === "nostalgia" && r.new_to_me ? "–" : oneDecimal(r[m.key])}`).join(" · ")}</T>
               {r.note ? <T style={{ fontSize: 14, marginTop: 4 }} numberOfLines={3}>{r.note}</T> : null}

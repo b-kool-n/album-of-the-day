@@ -72,3 +72,11 @@ export function spotifyLink(album: Pick<Album, "spotify_url" | "artist" | "title
   if (album.spotify_url && album.spotify_url.startsWith("https://open.spotify.com/")) return album.spotify_url;
   return "https://open.spotify.com/search/" + encodeURIComponent(`${album.artist} ${album.title}`);
 }
+
+// Long album titles are cut to 44 characters with "…" wherever they're displayed.
+// Screen-reader labels and search still use the full title.
+export const TITLE_MAX = 44;
+export function shortTitle(title: string, max = TITLE_MAX): string {
+  const chars = Array.from(title.trim());
+  return chars.length > max ? chars.slice(0, max).join("").trimEnd() + "…" : chars.join("");
+}

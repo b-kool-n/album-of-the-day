@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay, ukToday } from "@/lib/dates";
-import { MEASURES, oneDecimal, type Album, type Rating } from "@/lib/types";
+import { shortTitle, MEASURES, oneDecimal, type Album, type Rating } from "@/lib/types";
 import { Sleeve } from "@/components/Sleeve";
 import { Disc } from "@/components/Logo";
 import { JoinPage } from "@/components/Join";
@@ -56,7 +56,7 @@ export default async function MePage() {
               <Link className="rowlink" href={r.day === today ? "/" : `/day/${r.day}`}>
                 <div className="thumb"><Sleeve album={a} /></div>
                 <div className="main">
-                  <div className="t">{a.title}</div>
+                  <div className="t" title={a.title}>{shortTitle(a.title)}</div>
                   <div className="a">{a.artist}</div>
                   <div className="mini">
                     {MEASURES.map((m) => `${m.short.slice(0, 1)} ${m.key === "nostalgia" && r.new_to_me ? "–" : oneDecimal(r[m.key])}`).join(" · ")}

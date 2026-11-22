@@ -8,6 +8,7 @@ import { F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
 import { Banner, Button, Chip, Field, Loading, Message, Panel, Screen, T } from "@/components/ui";
 import { JoinScreen } from "@/components/Join";
+import { shortTitle } from "@/lib/types";
 
 type Suggestion = {
   id: string;
@@ -132,7 +133,7 @@ function Suggest() {
                 }
               >
                 <T v="small">Suggested {formatDay(s.created_at.slice(0, 10))}</T>
-                <T style={{ fontFamily: F.bold }} numberOfLines={2}>{s.title}</T>
+                <T style={{ fontFamily: F.bold }} numberOfLines={2}>{shortTitle(s.title)}</T>
                 <T v="muted" numberOfLines={1}>{s.artist}{s.release_year ? ` · ${s.release_year}` : ""}</T>
                 {s.reason ? <T style={{ fontSize: 14, marginTop: 4 }}>“{s.reason}”</T> : null}
                 {s.status === "rejected" && s.review_note ? <T v="muted" style={{ marginTop: 4 }}>Curator: {s.review_note}</T> : null}

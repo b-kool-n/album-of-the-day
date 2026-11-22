@@ -7,7 +7,7 @@ import { useLoad } from "@/lib/useLoad";
 import { useStreak } from "@/lib/streak";
 import { cancelScoreReminder, setScoreReminder } from "@/lib/push";
 import { formatDay, ukToday } from "@/lib/dates";
-import { MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type Rating } from "@/lib/types";
+import { shortTitle, MEASURES, oneDecimal, spotifyLink, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { Deck } from "./Sleeve";
 import { ShareScores } from "./ShareCard";
@@ -170,7 +170,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
       <Deck album={album} number={number} spinning={isToday && listening && !mine} />
 
       <T v="eyebrow">No. {number} · {formatDay(day)}{isToday ? " · Today" : ""}</T>
-      <T v="h1" style={{ marginTop: 6 }} accessibilityRole="header">{album.title}</T>
+      <T v="h1" style={{ marginTop: 6 }} accessibilityRole="header" accessibilityLabel={album.title}>{shortTitle(album.title)}</T>
       <T style={st.artist}>{album.artist}</T>
       <View style={st.facts}>
         {album.release_year ? <Fact label="Released" value={String(album.release_year)} mono /> : null}
@@ -185,7 +185,7 @@ export function DayView({ day, showBack = false }: { day: string; showBack?: boo
         onPress={() => {
           Linking.openURL(spotifyLink(album));
           if (isToday && !mine) {
-            if (userId) setScoreReminder(album.title, day);
+            if (userId) setScoreReminder(shortTitle(album.title), day);
             rememberListening(day);
             setListening(true);
           }

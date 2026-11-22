@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/session";
 import { useLoad } from "@/lib/useLoad";
 import { formatDay, ukToday } from "@/lib/dates";
-import { oneDecimal, type Album, type DayAverages } from "@/lib/types";
+import { shortTitle, oneDecimal, type Album, type DayAverages } from "@/lib/types";
 import { C, F } from "@/lib/theme";
 import { AlbumRow } from "@/components/AlbumRow";
 import { Chip, Empty, Loading, Screen, T } from "@/components/ui";
@@ -135,7 +135,7 @@ export default function Archive() {
                 album: r.albums,
                 badge: sort === "top" ? (avg != null ? oneDecimal(avg) : "–") : me != null ? oneDecimal(me) : `No. ${r.no}`,
                 hot: sort === "top" ? false : me != null,
-                caption: r.albums.title,
+                caption: shortTitle(r.albums.title),
                 label: `Number ${r.no}, ${formatDay(r.day)}: ${r.albums.title} by ${r.albums.artist}.${me != null ? ` You gave it ${oneDecimal(me)}.` : " Not scored by you yet."}`,
                 onPress: () => open(r.day),
               };
@@ -170,7 +170,7 @@ export default function Archive() {
                 <T style={{ fontFamily: F.mono, fontSize: 12, lineHeight: 16, color: C.muted }}>No. {r.no} · {formatDay(r.day)}</T>
                 {isToday && <Chip label="Today" hot />}
               </View>
-              <T style={{ fontFamily: F.bold }} numberOfLines={2}>{r.albums.title}</T>
+              <T style={{ fontFamily: F.bold }} numberOfLines={2}>{shortTitle(r.albums.title)}</T>
               <T v="muted" numberOfLines={1}>{r.albums.artist}{r.albums.release_year ? ` · ${r.albums.release_year}` : ""}</T>
             </AlbumRow>
           );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay, ukToday } from "@/lib/dates";
-import { MEASURES, isTopSong, oneDecimal, spotifyLink, trackLength, trackLink, type Album, type DayAverages, type Rating } from "@/lib/types";
+import { shortTitle, MEASURES, isTopSong, oneDecimal, spotifyLink, trackLength, trackLink, type Album, type DayAverages, type Rating } from "@/lib/types";
 import { Sleeve } from "./Sleeve";
 import { Disc } from "./Logo";
 import { ScoreForm } from "./ScoreForm";
@@ -47,7 +47,7 @@ export async function DayView({ day }: { day: string }) {
       </div>
       <div className="album-meta">
         <div className="eyebrow">No. {number} · {formatDay(day)}{isToday ? " · Today" : ""}</div>
-        <h1>{album.title}</h1>
+        <h1 title={album.title}>{shortTitle(album.title)}</h1>
         <div className="artist">{album.artist}</div>
         <div className="facts">
           {album.release_year && <span>Released <b className="num">{album.release_year}</b></span>}

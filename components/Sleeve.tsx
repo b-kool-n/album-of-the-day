@@ -1,4 +1,5 @@
 import type { Album } from "@/lib/types";
+import { shortTitle } from "@/lib/types";
 
 const SLEEVE_COLOURS = ["#2B3A55", "#5B2333", "#1F4D3F", "#3D3A35", "#6B4E16", "#283845", "#4A2C4F", "#1E3B32", "#3B2A20", "#204059"];
 
@@ -24,7 +25,7 @@ export function Sleeve({ album, number }: { album: Pick<Album, "artist" | "title
       <div className="s-code">AOTD {number ? String(number).padStart(3, "0") : ""}</div>
       <div>
         <div className="s-artist">{album.artist}</div>
-        <div className="s-title">{album.title}</div>
+        <div className="s-title">{shortTitle(album.title)}</div>
       </div>
     </div>
   );

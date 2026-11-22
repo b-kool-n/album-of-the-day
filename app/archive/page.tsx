@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/supabase/server";
 import { formatDay, ukToday } from "@/lib/dates";
-import { oneDecimal, type Album, type DayAverages } from "@/lib/types";
+import { shortTitle, oneDecimal, type Album, type DayAverages } from "@/lib/types";
 import { Sleeve } from "@/components/Sleeve";
 import { Disc } from "@/components/Logo";
 
@@ -62,7 +62,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
                 <div className="thumb"><Sleeve album={r.albums} /></div>
                 <div className="main">
                   <div className="d">No. {r.no} · {formatDay(r.day)} {r.day === today && <span className="chip hot">Today</span>}</div>
-                  <div className="t">{r.albums.title}</div>
+                  <div className="t" title={r.albums.title}>{shortTitle(r.albums.title)}</div>
                   <div className="a">{r.albums.artist}{r.albums.release_year ? <> · <span className="num">{r.albums.release_year}</span></> : null}</div>
                 </div>
                 <div className="right">

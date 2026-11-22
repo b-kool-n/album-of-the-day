@@ -4,6 +4,7 @@ import { sendPush } from "@/lib/push";
 import { sendAppPush } from "@/lib/expo-push";
 import { ukToday } from "@/lib/dates";
 import { REMINDER_TIMES } from "@/lib/reminder-times";
+import { shortTitle } from "@/lib/types";
 
 // The time on a UK clock right now, as "HH:MM".
 export function ukClock(now = new Date()): string {
@@ -35,7 +36,7 @@ export async function sendDueReminders(admin: AdminClient) {
   ]);
   if (error || tokenError) throw new Error("Couldn't read devices");
 
-  const title = `Today's album: ${album.title}`;
+  const title = `Today's album: ${shortTitle(album.title)}`;
   const body = `${album.artist}${album.release_year ? ` · ${album.release_year}` : ""}. Listen start to finish, then score it.`;
 
   // Browsers and home-screen web apps.
